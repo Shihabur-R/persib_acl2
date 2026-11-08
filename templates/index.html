@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ACL2 Fixtures & Standings - 2026/2027</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+    <header class="main-header" id="top">
+        <div class="header-container">
+            <div class="logo-area">
+                <div class="title-text">
+                    <span class="tournament-tag">AFC CHAMPIONS LEAGUE TWO</span>
+                    <h1>ACL2 <span>DASHBOARD</span></h1>
+                </div>
+            </div>
+            <nav class="nav-links">
+                <a href="/" class="active">Home</a>
+                <a href="/fixtures">Fixtures</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="content-wrapper">
+        <div class="dashboard-intro">
+            <h1 class="jl-page-title">Group E–H Fixtures & Standings</h1>
+            <p class="group-label">AFC Champions League Two 2026/27</p>
+            <div class="timezone-notice">
+                <span class="timezone-pill">
+                    <span class="timezone-dot" aria-hidden="true"></span>
+                    <span id="user-timezone-indicator">Waktu Lokal: WIB (UTC+7)</span>
+                </span>
+            </div>
+        </div>
+
+        <nav class="group-switcher" aria-label="Pilih grup">
+            {% for group in groups %}
+            <a href="#group-{{ group.name }}">Group {{ group.name }}</a>
+            {% endfor %}
+        </nav>
+
+        {% for group in groups %}
+        <section class="group-dashboard" id="group-{{ group.name }}">
+            <h2 class="group-heading">GROUP {{ group.name }}</h2>
+            <div class="group-panel-grid">
+                <section class="fixtures-section">
+                    <h3 class="section-title">FIXTURES & RESULTS</h3>
+                    <div class="group-match-list">
+                        {% for match in group.fixtures %}
+                        <article class="group-fixture-item">
+                            <div class="group-fixture-meta">
+                                <span>{{ match.matchweek }}</span>
+                                <time {% if match.iso_utc %}datetime="{{ match.iso_utc }}" data-utc-date="{{ match.iso_utc }}"{% endif %}>{{ match.tanggal }}</time>
+                                {% if match.waktu %}<span {% if match.iso_utc %}data-utc-time="{{ match.iso_utc }}"{% endif %}>{{ match.waktu }}</span>{% endif %}
+                            </div>
+                            <div class="fix-match">
+                                <span class="fix-team text-right flex-align-center justify-end">
+                                    {% if match.home_logo %}
+                                    <img src="{{ match.home_logo }}" alt="" class="table-mini-logo">
+                                    {% else %}
+                                    <span class="club-badge">{{ match.home_badge }}</span>
+                                    {% endif %}
+                                    <span class="club-name">{{ match.home }}</span>
+                                </span>
+                                <span class="fix-score {% if match.status == 'FT' %}ft-tag{% else %}ko-tag{% endif %}">
+                                    {% if match.status == 'FT' %}{{ match.skor_home }} - {{ match.skor_away }}{% else %}vs{% endif %}
+                                </span>
+                                <span class="fix-team text-left flex-align-center">
+                                    {% if match.away_logo %}
+                                    <img src="{{ match.away_logo }}" alt="" class="table-mini-logo">
+                                    {% else %}
+                                    <span class="club-badge">{{ match.away_badge }}</span>
+                                    {% endif %}
+                                    <span class="club-name">{{ match.away }}</span>
+                                </span>
+                            </div>
+                        </article>
+                        {% endfor %}
+                    </div>
+                </section>
+
+                <section class="table-section">
+                    <h3 class="section-title">GROUP {{ group.name }} STANDINGS</h3>
+                    <div class="table-responsive">
+                        <table class="j-table standings-table">
+                            <thead>
+                                <tr>
+                                    <th>POS</th>
+                                    <th class="text-left">CLUB</th>
+                                    <th>P</th>
+                                    <th>W</th>
+                                    <th>D</th>
+                                    <th>L</th>
+                                    <th>GF</th>
+                                    <th>GA</th>
+                                    <th>GD</th>
+                                    <th>PTS</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for team in group.standings %}
+                                <tr>
+                                    <td class="font-bold">{{ team.pos }}</td>
+                                    <td class="text-left font-bold">
+                                        <span class="table-team">
+                                            {% if team.logo %}
+                                            <img src="{{ team.logo }}" alt="" class="table-mini-logo">
+                                            {% else %}
+                                            <span class="club-badge">{{ team.badge }}</span>
+                                            {% endif %}
+                                            {{ team.tim }}
+                                        </span>
+                                    </td>
+                                    <td>{{ team.main }}</td>
+                                    <td>{{ team.menang }}</td>
+                                    <td>{{ team.seri }}</td>
+                                    <td>{{ team.kalah }}</td>
+                                    <td>{{ team.gf }}</td>
+                                    <td>{{ team.ga }}</td>
+                                    <td>{{ "%+d"|format(team.gd) }}</td>
+                                    <td class="font-bold">{{ team.poin }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+            </div>
+        </section>
+        {% endfor %}
+    </main>
+
+    <footer class="main-footer">
+        <p>Data fixtures & standings: <a href="{{ source_url }}" target="_blank" rel="noopener noreferrer">Situs resmi AFC</a></p>
+    </footer>
+    <a class="scroll-to-top" href="#top" aria-label="Kembali ke atas" title="Kembali ke atas">↑</a>
+    <script src="{{ url_for('static', filename='js/scroll-to-top.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/local-time.js') }}"></script>
+</body>
+</html>

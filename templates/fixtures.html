@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fixtures & Results - ACL2 2026/2027</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+    <header class="main-header" id="top">
+        <div class="header-container">
+            <div class="logo-area">
+                <div class="title-text">
+                    <span class="tournament-tag">AFC CHAMPIONS LEAGUE TWO</span>
+                    <h1>ACL2 <span>DASHBOARD</span></h1>
+                </div>
+            </div>
+            <nav class="nav-links">
+                <a href="/">Home</a>
+                <a href="/fixtures" class="active">Fixtures</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="content-wrapper jl-fixtures-wrapper">
+        <h1 class="jl-page-title">Fixtures & Results</h1>
+        <p class="group-label">AFC Champions League Two 2026/27 · Groups E–H</p>
+        <div class="timezone-notice">
+            <span class="timezone-pill">
+                <span class="timezone-dot" aria-hidden="true"></span>
+                <span id="user-timezone-indicator">Waktu Lokal: WIB (UTC+7)</span>
+            </span>
+        </div>
+
+        <nav class="group-switcher" aria-label="Pilih grup">
+            {% for group in groups %}
+            <a href="#fixtures-{{ group.name }}">Group {{ group.name }}</a>
+            {% endfor %}
+        </nav>
+
+        {% for group in groups %}
+        <section class="fixture-group" id="fixtures-{{ group.name }}">
+            <h2 class="group-heading">GROUP {{ group.name }}</h2>
+            <div class="jl-matchlist-container">
+                {% for match in group.fixtures %}
+                <article class="jl-match-row">
+                    <div class="jl-col-time">
+                        <span class="jl-time-text" {% if match.iso_utc %}data-utc-date="{{ match.iso_utc }}"{% endif %}>{{ match.tanggal }}</span>
+                        <span class="jl-ko-text">{{ match.matchweek }}</span>
+                        {% if match.waktu %}<span class="jl-ko-text" {% if match.iso_utc %}data-utc-time="{{ match.iso_utc }}"{% endif %}>{{ match.waktu }}</span>{% endif %}
+                    </div>
+                    <div class="jl-col-fixture-matrix">
+                        <div class="jl-team-block jl-team-home">
+                            <span class="jl-team-name-text">{{ match.home }}</span>
+                            {% if match.home_logo %}
+                            <img src="{{ match.home_logo }}" alt="" class="jl-mini-crest">
+                            {% else %}
+                            <span class="club-badge">{{ match.home_badge }}</span>
+                            {% endif %}
+                        </div>
+                        <div class="jl-score-status-block">
+                            {% if match.status == 'FT' %}
+                            <div class="jl-score-box-numbers">
+                                {{ match.skor_home }}<span class="jl-num-divider">-</span>{{ match.skor_away }}
+                            </div>
+                            <span class="jl-badge-status-flat jl-ft-color">Full Time</span>
+                            {% else %}
+                            <div class="jl-vs-box-text">VS</div>
+                            <span class="jl-badge-status-flat jl-scheduled-color">Jadwal</span>
+                            {% endif %}
+                        </div>
+                        <div class="jl-team-block jl-team-away">
+                            {% if match.away_logo %}
+                            <img src="{{ match.away_logo }}" alt="" class="jl-mini-crest">
+                            {% else %}
+                            <span class="club-badge">{{ match.away_badge }}</span>
+                            {% endif %}
+                            <span class="jl-team-name-text">{{ match.away }}</span>
+                        </div>
+                    </div>
+                </article>
+                {% endfor %}
+            </div>
+        </section>
+        {% endfor %}
+    </main>
+
+    <footer class="main-footer">
+        <p>Data fixtures & results: <a href="{{ source_url }}" target="_blank" rel="noopener noreferrer">Situs resmi AFC</a></p>
+    </footer>
+    <a class="scroll-to-top" href="#top" aria-label="Kembali ke atas" title="Kembali ke atas">↑</a>
+    <script src="{{ url_for('static', filename='js/scroll-to-top.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/local-time.js') }}"></script>
+</body>
+</html>

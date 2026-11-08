@@ -1,0 +1,858 @@
+/* ========================================================================== 
+   RESET & DASAR
+   ========================================================================== */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+:root {
+    --league-background: #000039;
+    --league-navy: #000039;
+    --league-blue: #3944E7;
+    --league-panel: #161647;
+    --league-surface: #272A2E;
+    --league-border: #393C46;
+    --league-text: #F5F5F5;
+    --league-text-soft: #E5E5E5;
+    --league-muted: #B2B2B2;
+}
+
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: var(--league-background);
+    color: var(--league-text);
+    line-height: 1.6;
+}
+
+/* ========================================================================== 
+   HEADER & NAVIGASI
+   ========================================================================== */
+.main-header {
+    background: linear-gradient(270deg, #3944E7 0%, #000039 100%);
+    color: #ffffff;
+    padding: 15px 0;
+    border-bottom: 4px solid var(--league-blue);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+.header-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.logo-area .tournament-tag {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 0.8rem;
+    letter-spacing: 2px;
+    color: var(--league-text);
+    display: block;
+    margin-bottom: -2px;
+}
+
+.logo-area h1 {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 2.2rem;
+    font-weight: 700;
+    font-style: normal;
+    letter-spacing: 0.5px;
+}
+
+.logo-area h1 span {
+    color: var(--league-text);
+}
+
+.nav-links a {
+    color: #ffffff;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.95rem;
+    margin-left: 25px;
+    padding: 8px 18px;
+    border-radius: 25px;
+    transition: all 0.3s ease;
+}
+
+.nav-links a:hover, .nav-links a.active {
+    background-color: #ffffff;
+    color: var(--league-navy);
+}
+
+/* ========================================================================== 
+   LAYOUT UTAMA
+   ========================================================================== */
+.content-wrapper {
+    max-width: 1200px;
+    margin: 30px auto;
+    padding: 0 20px;
+}
+
+.section-title {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 1.25rem;
+    font-weight: 700;
+    letter-spacing: 1px;
+    color: var(--league-text);
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    border-left: 4px solid var(--league-blue);
+    padding-left: 8px;
+}
+
+.section-title.text-green {
+    color: var(--league-text);
+    border-left-color: var(--league-blue);
+}
+
+/* ========================================================================== 
+   BARIS BAWAH: GRID 2 KOLOM
+   ========================================================================== */
+.grid-two-columns {
+    display: grid;
+    grid-template-columns: 1.6fr 1fr;
+    gap: 30px;
+}
+
+@media (max-width: 900px) {
+    .grid-two-columns {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ========================================================================== 
+   KOLOM KANAN: SIDEBAR DATA (Klasemen & Jadwal)
+   ========================================================================== */
+.sidebar-data {
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+}
+
+.table-section, .fixtures-section {
+    background: var(--league-panel);
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+    border-top: 4px solid var(--league-blue);
+}
+
+/* J-League style table */
+.table-responsive { width: 100%; overflow-x: auto; }
+.j-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+    text-align: center;
+}
+
+.j-table th {
+    background-color: var(--league-surface);
+    color: var(--league-muted);
+    font-weight: 600;
+    padding: 10px 8px;
+    border-bottom: 2px solid var(--league-border);
+}
+
+.j-table td {
+    padding: 12px 8px;
+    border-bottom: 1px solid var(--league-border);
+}
+
+.text-left { text-align: left; }
+.font-bold { font-weight: 700; }
+
+.table-team {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 150px;
+}
+
+.group-label {
+    color: var(--league-muted);
+    margin: -16px 0 20px;
+}
+
+/* Indikator deteksi otomatis zona waktu */
+.timezone-notice {
+    margin: -12px 0 20px;
+    display: flex;
+    align-items: center;
+}
+
+.timezone-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    background: rgba(57, 68, 231, 0.16);
+    border: 1px solid rgba(57, 68, 231, 0.4);
+    color: var(--league-text-soft);
+    padding: 4px 12px;
+    border-radius: 9999px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+    backdrop-filter: blur(4px);
+    cursor: default;
+    transition: all 0.25s ease;
+}
+
+.timezone-pill:hover {
+    background: rgba(57, 68, 231, 0.28);
+    border-color: rgba(57, 68, 231, 0.7);
+    color: #ffffff;
+}
+
+.timezone-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background-color: #22c55e;
+    box-shadow: 0 0 6px rgba(34, 197, 94, 0.85);
+    display: inline-block;
+    animation: pulse-dot 2.2s infinite ease-in-out;
+}
+
+@keyframes pulse-dot {
+    0%, 100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+    50% {
+        opacity: 0.45;
+        transform: scale(0.8);
+    }
+}
+
+/* Sorotan baris tim utama */
+.row-highlight {
+    background-color: rgba(57, 68, 231, 0.18);
+    color: var(--league-text);
+    border-left: 3px solid var(--league-blue);
+}
+
+/* Desain daftar jadwal */
+.fixtures-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.fixture-item {
+    background-color: var(--league-surface);
+    border: 1px solid var(--league-border);
+    border-radius: 6px;
+    padding: 12px;
+}
+
+.fix-date {
+    font-size: 0.75rem;
+    color: var(--league-muted);
+    font-weight: 600;
+    margin-bottom: 6px;
+}
+
+.fix-match {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.fix-team { width: 38%; }
+.text-right { text-align: right; }
+
+.fix-score {
+    width: 22%;
+    text-align: center;
+    font-size: 0.8rem;
+    padding: 3px 6px;
+    border-radius: 4px;
+    font-weight: 700;
+}
+
+.ft-tag { background-color: var(--league-border); color: var(--league-text); }
+.ko-tag { background-color: var(--league-panel); color: var(--league-text); border: 1px solid var(--league-blue); }
+
+.fix-venue {
+    font-size: 0.75rem;
+    color: var(--league-muted);
+    margin-top: 4px;
+}
+
+/* ========================================================================== 
+   FOOTER
+   ========================================================================== */
+.main-footer {
+    text-align: center;
+    padding: 30px 20px;
+    color: var(--league-muted);
+    font-size: 0.85rem;
+    background-color: var(--league-background);
+    border-top: 1px solid var(--league-border);
+    margin-top: 5px;
+}
+/* ========================================================================== 
+   GAYA UNTUK LOGO TIM & TURNAMEN (ACL2)
+   ========================================================================== */
+
+/* Logo ACL2 pada Header */
+.logo-area {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.logo-area {
+    display: flex;
+    align-items: center; 
+    gap: 15px;
+    max-height: 60px; 
+}
+
+.tournament-logo-header {
+    height: 40px !important;  
+    width: auto !important;    
+    max-width: 50px !important;
+    object-fit: contain;
+    filter: drop-shadow(0px 2px 4px rgba(0,0,0,0.2));
+    flex-shrink: 0;          
+}
+
+.logo-area .title-text {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start; /* Memaksa baris atas dan bawah rata di sisi kiri */
+    justify-content: center;
+    text-align: left;
+    margin: 0;
+    padding: 0;
+}
+
+/* Baris Atas: AFC CHAMPIONS LEAGUE TWO */
+.logo-area .tournament-tag {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 0.8rem;
+    letter-spacing: 1px;
+    color: #FFD700;
+    display: block;
+    margin: 0 0 2px 0;
+    padding: 0;
+    text-align: left;
+}
+
+/* Baris Bawah: PERSIB BANDUNG */
+.logo-area h1 {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 2.2rem;
+    font-weight: 700;
+    font-style: normal;
+    letter-spacing: 0px;
+    line-height: 1;
+    margin: 0;
+    padding: 0;
+    text-align: left;
+    display: block;
+    color: #ffffff;
+}
+
+/* Mini Logo di Tabel Klasemen dan List Jadwal */
+.flex-align-center {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.justify-end {
+    justify-content: flex-end;
+}
+
+.table-mini-logo {
+    width: 22px;
+    height: 22px;
+    object-fit: contain;
+    display: inline-block;
+}
+
+.margin-left {
+    margin-left: 8px;
+}
+
+/* ==========================================================================
+   PERBAIKAN TOTAL: TEKS PUTIH KONTRAST TINGGI (100% TERBACA JELAS)
+   ========================================================================== */
+.jl-fixtures-wrapper {
+    max-width: 1040px;
+    margin: 40px auto;
+    padding: 0 20px;
+    background: transparent !important;
+}
+
+.jl-page-title {
+    font-family: 'Inter', sans-serif;
+    font-size: 2rem;
+    font-weight: 800;
+    color: #ffffff !important; /* Judul Halaman Putih Bersih */
+    margin-bottom: 25px;
+    letter-spacing: -0.5px;
+}
+
+.jl-matchlist-container {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    background: transparent !important;
+}
+
+/* Header Tanggal */
+.jl-date-header {
+    width: 100%;
+    padding: 16px 0 8px 0;
+    margin-top: 25px;
+    border-bottom: 2px solid #ffffff !important; /* Garis bawah Putih */
+    background: transparent !important;
+}
+
+.jl-date-header h2 {
+    font-family: 'Inter', sans-serif;
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: #ffffff !important; /* Teks Tanggal Putih Bersih */
+}
+
+.jl-sub-header-tag {
+    font-size: 0.85rem;
+    color: #cccccc !important; /* Teks Kompetisi Abu-abu Terang */
+    display: block;
+    margin-top: 4px;
+}
+
+/* Baris Pertandingan */
+.jl-match-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 22px 0;
+    background: transparent !important; 
+    border: none !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2) !important; /* Garis pemisah horizontal putih transparan */
+    border-radius: 0px !important;
+    width: 100%;
+}
+
+.jl-match-row:hover {
+    background-color: rgba(255, 255, 255, 0.05) !important; /* Efek hover tipis */
+}
+
+/* 1. Kolom Waktu KO */
+.jl-col-time {
+    width: 12%;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+}
+
+.jl-time-text {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #ffffff !important; /* Jam Putih */
+    line-height: 1;
+}
+
+.jl-ko-text {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #cccccc !important; /* Tulisan KO Abu Terang */
+    margin-top: 2px;
+}
+
+/* 2. Kolom Utama Matriks Pertandingan */
+.jl-col-fixture-matrix {
+    width: 53%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.jl-team-block {
+    display: flex;
+    align-items: center;
+    width: 42%;
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: #ffffff !important; /* Nama Klub Putih */
+}
+
+.jl-team-home {
+    justify-content: flex-end;
+    text-align: right;
+}
+
+.jl-team-away {
+    justify-content: flex-start;
+    text-align: left;
+}
+
+.jl-team-name-text {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.jl-mini-crest {
+    width: 32px;
+    height: 32px;
+    object-fit: contain;
+    flex-shrink: 0;
+}
+
+.jl-team-home .jl-mini-crest { margin-left: 14px; }
+.jl-team-away .jl-mini-crest { margin-right: 14px; }
+
+/* Box Skor Tengah */
+.jl-score-status-block {
+    width: 16%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-width: 95px;
+}
+
+.jl-score-box-numbers {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 2.2rem;
+    font-weight: 700;
+    color: #FFD700 !important; /* Angka Skor Kuning Emas khas Persib agar menyala */
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.jl-num-divider {
+    color: #ffffff !important;
+}
+
+.jl-vs-box-text {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #cccccc !important; /* Tulisan VS Abu Terang */
+    line-height: 1;
+}
+
+/* Status Lencana */
+.jl-badge-status-flat {
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 3px 14px;
+    border-radius: 15px;
+    margin-top: 6px;
+    text-align: center;
+    white-space: nowrap;
+}
+
+.jl-ft-color { 
+    background-color: rgba(255, 255, 255, 0.2) !important; /* Lencana Full Time Putih Transparan */
+    color: #ffffff !important; 
+}
+
+.jl-scheduled-color { 
+    background-color: transparent !important; 
+    color: #FFD700 !important; 
+    border: 1px solid #FFD700 !important; 
+}
+
+/* 3. Kolom Nama Stadion */
+.jl-col-venue-stadium {
+    width: 20%;
+    padding-left: 15px;
+    font-size: 0.85rem;
+    color: #dddddd !important; /* Nama Stadion Putih Soft */
+    text-align: left;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* RESPONSIVE */
+@media (max-width: 768px) {
+    .jl-match-row {
+        flex-direction: column;
+        gap: 12px;
+        padding: 20px 0;
+    }
+    .jl-col-time, .jl-col-fixture-matrix, .jl-col-venue-stadium {
+        width: 100% !important;
+        text-align: center !important;
+        align-items: center !important;
+    }
+}
+
+.dashboard-intro {
+    margin-bottom: 20px;
+}
+
+.dashboard-intro .jl-page-title {
+    margin-bottom: 18px;
+}
+
+.group-switcher {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin: 0 0 28px;
+}
+
+.group-switcher a {
+    border: 1px solid var(--league-blue);
+    border-radius: 20px;
+    color: var(--league-text);
+    font-weight: 700;
+    padding: 6px 16px;
+    text-decoration: none;
+}
+
+.group-switcher a:hover {
+    background: var(--league-blue);
+}
+
+.group-dashboard,
+.fixture-group {
+    scroll-margin-top: 110px;
+    margin-bottom: 36px;
+}
+
+.group-heading {
+    border-bottom: 2px solid var(--league-blue);
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 1.6rem;
+    letter-spacing: 1px;
+    margin-bottom: 16px;
+    padding-bottom: 8px;
+}
+
+.group-panel-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+    gap: 20px;
+    align-items: start;
+}
+
+.group-match-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.group-fixture-item {
+    background: var(--league-surface);
+    border: 1px solid var(--league-border);
+    border-radius: 6px;
+    padding: 9px;
+}
+
+.group-fixture-meta {
+    display: flex;
+    justify-content: space-between;
+    color: var(--league-muted);
+    font-size: 0.7rem;
+    font-weight: 700;
+    margin-bottom: 6px;
+}
+
+.group-fixture-item .fix-match {
+    font-size: 0.78rem;
+}
+
+.group-fixture-item .fix-team {
+    gap: 5px;
+    min-width: 0;
+}
+
+.club-name,
+.jl-team-name-text {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.club-badge {
+    align-items: center;
+    background: #3944e7;
+    border: 1px solid rgba(255, 255, 255, 0.35);
+    border-radius: 50%;
+    color: #fff;
+    display: inline-flex;
+    flex: 0 0 26px;
+    font-size: 0.55rem;
+    font-weight: 800;
+    height: 26px;
+    justify-content: center;
+    line-height: 1;
+    width: 26px;
+}
+
+.group-fixture-item .table-mini-logo {
+    flex: 0 0 22px;
+}
+
+.standings-table {
+    min-width: 690px;
+}
+
+.standings-table th,
+.standings-table td {
+    padding: 9px 6px;
+}
+
+.standings-table .table-team {
+    min-width: 205px;
+}
+
+.jl-fixtures-wrapper .group-switcher {
+    margin-bottom: 24px;
+}
+
+.fixture-group .jl-match-row {
+    justify-content: flex-start;
+    gap: 16px;
+}
+
+.fixture-group .jl-col-time {
+    flex: 0 0 22%;
+    width: 22%;
+}
+
+.fixture-group .jl-col-fixture-matrix {
+    flex: 1;
+    width: auto;
+}
+
+.fixture-group .jl-team-block {
+    font-size: 0.9rem;
+}
+
+.fixture-group .club-badge {
+    flex-shrink: 0;
+}
+
+.fixture-group .jl-team-home .club-badge {
+    margin-left: 14px;
+}
+
+.fixture-group .jl-team-away .club-badge {
+    margin-right: 14px;
+}
+
+.main-footer a {
+    color: var(--league-text);
+}
+
+.scroll-to-top {
+    align-items: center;
+    background: var(--league-blue);
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    border-radius: 50%;
+    bottom: 24px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+    color: #fff;
+    display: flex;
+    font-size: 1.6rem;
+    font-weight: 700;
+    height: 48px;
+    justify-content: center;
+    line-height: 1;
+    position: fixed;
+    right: 24px;
+    text-decoration: none;
+    transform: translateY(8px);
+    transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s;
+    visibility: hidden;
+    opacity: 0;
+    pointer-events: none;
+    width: 48px;
+    z-index: 99;
+}
+
+.scroll-to-top.is-visible {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateY(0);
+    visibility: visible;
+}
+
+.scroll-to-top:hover {
+    background: #fff;
+    color: var(--league-navy);
+}
+
+.scroll-to-top:focus-visible {
+    outline: 3px solid #fff;
+    outline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    html {
+        scroll-behavior: auto;
+    }
+
+    .scroll-to-top {
+        transition: none;
+    }
+}
+
+@media (max-width: 900px) {
+    .group-panel-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .group-panel-grid .table-section {
+        order: -1;
+    }
+}
+
+@media (max-width: 768px) {
+    .fixture-group .jl-match-row {
+        align-items: stretch;
+        gap: 10px;
+    }
+
+    .fixture-group .jl-col-time {
+        align-items: center;
+        flex-basis: auto;
+        width: 100%;
+    }
+
+    .fixture-group .jl-col-fixture-matrix {
+        width: 100%;
+    }
+
+    .fixture-group .jl-team-block {
+        width: 42%;
+        font-size: 0.78rem;
+    }
+
+    .fixture-group .jl-score-status-block {
+        min-width: 70px;
+        width: 16%;
+    }
+}
