@@ -21,6 +21,8 @@
             <nav class="nav-links">
                 <a href="/">Home</a>
                 <a href="/fixtures" class="active">Fixtures</a>
+                <a href="/clubs">Klub & Skuad</a>
+                <a href="/players">Daftar Pemain</a>
             </nav>
         </div>
     </header>
@@ -54,7 +56,11 @@
                     </div>
                     <div class="jl-col-fixture-matrix">
                         <div class="jl-team-block jl-team-home">
+                            {% if match.home_slug %}
+                            <a href="{{ url_for('club_detail', slug=match.home_slug) }}" class="jl-team-name-text club-link" title="Lihat Skuad {{ match.home }}">{{ match.home }}</a>
+                            {% else %}
                             <span class="jl-team-name-text">{{ match.home }}</span>
+                            {% endif %}
                             {% if match.home_logo %}
                             <img src="{{ match.home_logo }}" alt="" class="jl-mini-crest">
                             {% else %}
@@ -78,7 +84,11 @@
                             {% else %}
                             <span class="club-badge">{{ match.away_badge }}</span>
                             {% endif %}
+                            {% if match.away_slug %}
+                            <a href="{{ url_for('club_detail', slug=match.away_slug) }}" class="jl-team-name-text club-link" title="Lihat Skuad {{ match.away }}">{{ match.away }}</a>
+                            {% else %}
                             <span class="jl-team-name-text">{{ match.away }}</span>
+                            {% endif %}
                         </div>
                     </div>
                 </article>

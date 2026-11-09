@@ -785,12 +785,14 @@ body {
     right: 24px;
     text-decoration: none;
     transform: translateY(8px);
-    transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s;
+    transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s, background 0.2s ease;
     visibility: hidden;
     opacity: 0;
     pointer-events: none;
     width: 48px;
     z-index: 99;
+    cursor: pointer;
+    user-select: none;
 }
 
 .scroll-to-top.is-visible {
@@ -803,6 +805,13 @@ body {
 .scroll-to-top:hover {
     background: #fff;
     color: var(--league-navy);
+    transform: translateY(-3px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.45);
+}
+
+.scroll-to-top:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 
 .scroll-to-top:focus-visible {
@@ -854,5 +863,770 @@ body {
     .fixture-group .jl-score-status-block {
         min-width: 70px;
         width: 16%;
+    }
+}
+
+/* ========================================================================== 
+   DATABASE, CLUBS & SQUADS STYLES (ACL2 2026/2027)
+   ========================================================================== */
+
+/* Link styling for club names */
+.club-link {
+    color: #ffffff;
+    text-decoration: none;
+    transition: color 0.2s ease, text-decoration 0.2s ease;
+}
+
+.club-link:hover {
+    color: #93c5fd;
+    text-decoration: underline;
+}
+
+.db-pill {
+    text-decoration: none;
+    border-color: rgba(16, 185, 129, 0.4);
+    background: rgba(16, 185, 129, 0.1);
+    color: #a7f3d0;
+    transition: all 0.2s ease;
+}
+
+.db-pill:hover {
+    background: rgba(16, 185, 129, 0.2);
+    border-color: rgba(16, 185, 129, 0.7);
+    color: #ffffff;
+}
+
+/* Breadcrumb */
+.breadcrumb-nav {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.88rem;
+    margin-bottom: 20px;
+    color: var(--league-muted);
+}
+
+.breadcrumb-nav a {
+    color: #93c5fd;
+    text-decoration: none;
+}
+
+.breadcrumb-nav a:hover {
+    text-decoration: underline;
+}
+
+.breadcrumb-sep {
+    color: #64748b;
+}
+
+.breadcrumb-current {
+    color: #ffffff;
+    font-weight: 600;
+}
+
+/* Group heading & badges */
+.group-heading-wrapper {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.group-badge-count {
+    font-size: 0.82rem;
+    background: rgba(57, 68, 231, 0.3);
+    border: 1px solid var(--league-blue);
+    padding: 3px 12px;
+    border-radius: 12px;
+    color: #cbd5e1;
+}
+
+/* Club Cards Grid */
+.club-card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
+    gap: 20px;
+    margin-bottom: 35px;
+}
+
+.club-card {
+    background: var(--league-panel);
+    border: 1px solid var(--league-border);
+    border-radius: 12px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.club-card:hover {
+    transform: translateY(-4px);
+    border-color: var(--league-blue);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+}
+
+.club-card-header {
+    display: flex;
+    gap: 15px;
+    align-items: flex-start;
+    margin-bottom: 16px;
+}
+
+.club-card-crest {
+    width: 58px;
+    height: 58px;
+    min-width: 58px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    padding: 6px;
+}
+
+.club-card-crest img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+}
+
+.club-badge-large {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 700;
+    font-size: 1rem;
+    color: #ffffff;
+}
+
+.club-card-main-info {
+    flex: 1;
+}
+
+.club-card-country {
+    font-size: 0.76rem;
+    color: var(--league-muted);
+    display: block;
+    margin-bottom: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.club-card-name {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 1.35rem;
+    line-height: 1.2;
+    margin-bottom: 3px;
+}
+
+.club-card-name a {
+    color: #ffffff;
+    text-decoration: none;
+    transition: color 0.2s ease;
+}
+
+.club-card-name a:hover {
+    color: #93c5fd;
+}
+
+.club-card-official {
+    font-size: 0.78rem;
+    color: #94a3b8;
+    display: block;
+    line-height: 1.3;
+}
+
+.club-card-body {
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    padding: 12px 0;
+    margin-bottom: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.club-card-detail-item {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.83rem;
+}
+
+.detail-label {
+    color: #94a3b8;
+}
+
+.detail-value {
+    color: #e2e8f0;
+    text-align: right;
+    max-width: 60%;
+}
+
+.club-card-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.squad-counter-badge {
+    display: flex;
+    align-items: baseline;
+    gap: 4px;
+}
+
+.counter-number {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: #38bdf8;
+}
+
+.counter-text {
+    font-size: 0.8rem;
+    color: #94a3b8;
+}
+
+.btn-squad-link {
+    display: inline-block;
+    background: var(--league-blue);
+    color: #ffffff;
+    padding: 7px 16px;
+    border-radius: 20px;
+    font-size: 0.84rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+
+.btn-squad-link:hover {
+    background: #4f46e5;
+    transform: scale(1.03);
+}
+
+/* ========================================================================== 
+   CLUB DETAIL / HERO CARD
+   ========================================================================== */
+.club-hero-card {
+    background: linear-gradient(135deg, #1e1b4b 0%, #0f172a 100%);
+    border: 1px solid rgba(99, 102, 241, 0.3);
+    border-radius: 16px;
+    padding: 30px;
+    display: flex;
+    gap: 30px;
+    align-items: center;
+    margin-bottom: 25px;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+}
+
+.club-hero-crest-box {
+    width: 120px;
+    height: 120px;
+    min-width: 120px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 2px solid rgba(255, 255, 255, 0.15);
+    border-radius: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 12px;
+}
+
+.club-hero-crest {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    filter: drop-shadow(0 4px 10px rgba(0,0,0,0.5));
+}
+
+.club-badge-hero {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 2rem;
+    font-weight: 800;
+    color: #ffffff;
+}
+
+.club-hero-details {
+    flex: 1;
+}
+
+.club-hero-tags {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 10px;
+}
+
+.hero-tag-group {
+    background: #3944e7;
+    color: #ffffff;
+    font-weight: 700;
+    font-size: 0.76rem;
+    padding: 3px 10px;
+    border-radius: 6px;
+    letter-spacing: 0.5px;
+}
+
+.hero-tag-country {
+    background: rgba(255, 255, 255, 0.1);
+    color: #ffffff;
+    font-size: 0.78rem;
+    padding: 3px 10px;
+    border-radius: 6px;
+}
+
+.hero-tag-season {
+    background: rgba(16, 185, 129, 0.2);
+    border: 1px solid rgba(16, 185, 129, 0.4);
+    color: #6ee7b7;
+    font-size: 0.78rem;
+    padding: 3px 10px;
+    border-radius: 6px;
+}
+
+.club-hero-title {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 2.5rem;
+    font-weight: 800;
+    line-height: 1.1;
+    margin-bottom: 4px;
+    color: #ffffff;
+}
+
+.club-hero-official {
+    color: #cbd5e1;
+    font-size: 0.95rem;
+    margin-bottom: 18px;
+}
+
+.club-hero-meta-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    padding-top: 15px;
+}
+
+.meta-item {
+    display: flex;
+    flex-direction: column;
+}
+
+.meta-label {
+    font-size: 0.7rem;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 3px;
+}
+
+.meta-val {
+    font-size: 0.92rem;
+    color: #f1f5f9;
+    font-weight: 600;
+}
+
+.link-external {
+    color: #38bdf8;
+    text-decoration: none;
+    transition: color 0.2s ease;
+}
+
+.link-external:hover {
+    color: #ffffff;
+    text-decoration: underline;
+}
+
+/* ========================================================================== 
+   SQUAD SUMMARY COUNTERS & FILTER TABS
+   ========================================================================== */
+.squad-summary-row {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 25px;
+    flex-wrap: wrap;
+}
+
+.summary-chip {
+    flex: 1;
+    min-width: 110px;
+    background: var(--league-panel);
+    border: 1px solid var(--league-border);
+    border-radius: 10px;
+    padding: 12px 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    user-select: none;
+}
+
+.summary-chip:hover {
+    border-color: #64748b;
+    transform: translateY(-2px);
+}
+
+.summary-chip.active {
+    background: #1e1b4b;
+    border-color: var(--league-blue);
+    box-shadow: 0 4px 12px rgba(57, 68, 231, 0.3);
+}
+
+.chip-count {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: #ffffff;
+}
+
+.chip-label {
+    font-size: 0.8rem;
+    color: #94a3b8;
+}
+
+.chip-gk.active .chip-count { color: #fbbf24; }
+.chip-df.active .chip-count { color: #60a5fa; }
+.chip-mf.active .chip-count { color: #34d399; }
+.chip-fw.active .chip-count { color: #f87171; }
+
+/* Squad table section & search */
+.section-header-flex {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 15px;
+    margin-bottom: 15px;
+}
+
+.squad-search-box input {
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid var(--league-border);
+    border-radius: 8px;
+    color: #ffffff;
+    padding: 8px 16px;
+    font-size: 0.9rem;
+    outline: none;
+    min-width: 260px;
+    transition: border-color 0.2s ease;
+}
+
+.squad-search-box input:focus {
+    border-color: var(--league-blue);
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.squad-section {
+    background: var(--league-panel);
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 30px;
+    border-top: 4px solid var(--league-blue);
+}
+
+.squad-roster-table {
+    width: 100%;
+}
+
+.th-num {
+    width: 65px;
+}
+
+.jersey-pill {
+    display: inline-block;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 1.15rem;
+    font-weight: 700;
+    background: rgba(57, 68, 231, 0.25);
+    border: 1px solid rgba(57, 68, 231, 0.6);
+    color: #93c5fd;
+    padding: 2px 10px;
+    border-radius: 6px;
+    min-width: 38px;
+    text-align: center;
+}
+
+.jersey-pill.unassigned {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.1);
+    color: #64748b;
+}
+
+.player-name-cell {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.player-name-text {
+    font-size: 0.95rem;
+    color: #f8fafc;
+}
+
+.captain-badge {
+    background: linear-gradient(135deg, #d97706, #b45309);
+    color: #ffffff;
+    font-size: 0.68rem;
+    font-weight: 700;
+    padding: 2px 6px;
+    border-radius: 4px;
+    letter-spacing: 0.5px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.pos-badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 6px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.pos-gk {
+    background: rgba(245, 158, 11, 0.15);
+    border: 1px solid rgba(245, 158, 11, 0.5);
+    color: #fbbf24;
+}
+
+.pos-df {
+    background: rgba(59, 130, 246, 0.15);
+    border: 1px solid rgba(59, 130, 246, 0.5);
+    color: #60a5fa;
+}
+
+.pos-mf {
+    background: rgba(16, 185, 129, 0.15);
+    border: 1px solid rgba(16, 185, 129, 0.5);
+    color: #34d399;
+}
+
+.pos-fw {
+    background: rgba(239, 68, 68, 0.15);
+    border: 1px solid rgba(239, 68, 68, 0.5);
+    color: #f87171;
+}
+
+.nationality-cell {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.9rem;
+    color: #e2e8f0;
+}
+
+.flag-icon {
+    font-size: 1.15rem;
+}
+
+/* Sibling Clubs */
+.sibling-clubs-section {
+    margin-top: 30px;
+    margin-bottom: 30px;
+}
+
+.sibling-clubs-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 15px;
+    margin-top: 15px;
+}
+
+.sibling-club-card {
+    background: var(--league-panel);
+    border: 1px solid var(--league-border);
+    border-radius: 10px;
+    padding: 15px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+
+.sibling-club-card:hover {
+    border-color: var(--league-blue);
+    transform: translateY(-2px);
+    background: #1e1b4b;
+}
+
+.sibling-mini-logo {
+    width: 32px;
+    height: 32px;
+    object-fit: contain;
+}
+
+.sibling-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.sibling-name {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: #ffffff;
+}
+
+.sibling-country {
+    font-size: 0.75rem;
+    color: #94a3b8;
+}
+
+/* ========================================================================== 
+   PLAYERS DIRECTORY & FILTER PANEL
+   ========================================================================== */
+.players-filter-panel {
+    background: var(--league-panel);
+    border: 1px solid var(--league-border);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 25px;
+    border-top: 4px solid var(--league-blue);
+}
+
+.filter-form-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1.5fr 1fr auto;
+    gap: 15px;
+    align-items: flex-end;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.form-group label {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.form-group input,
+.form-group select {
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid var(--league-border);
+    border-radius: 8px;
+    color: #ffffff;
+    padding: 10px 14px;
+    font-size: 0.9rem;
+    outline: none;
+    transition: border-color 0.2s ease;
+}
+
+.form-group select option {
+    background: #0f172a;
+    color: #ffffff;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+    border-color: var(--league-blue);
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.form-actions {
+    display: flex;
+    flex-direction: row;
+    gap: 10px;
+}
+
+.btn-filter-submit {
+    background: var(--league-blue);
+    color: #ffffff;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 18px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: background 0.2s ease;
+    white-space: nowrap;
+}
+
+.btn-filter-submit:hover {
+    background: #4f46e5;
+}
+
+.btn-filter-reset {
+    background: rgba(255, 255, 255, 0.1);
+    color: #cbd5e1;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 8px;
+    padding: 10px 16px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    transition: all 0.2s ease;
+}
+
+.btn-filter-reset:hover {
+    background: rgba(255, 255, 255, 0.2);
+    color: #ffffff;
+}
+
+.player-club-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: #e2e8f0;
+    text-decoration: none;
+    transition: color 0.2s ease;
+}
+
+.player-club-link:hover {
+    color: #93c5fd;
+    text-decoration: underline;
+}
+
+.group-tag-pill {
+    display: inline-block;
+    background: rgba(57, 68, 231, 0.2);
+    border: 1px solid rgba(57, 68, 231, 0.5);
+    color: #cbd5e1;
+    padding: 2px 8px;
+    border-radius: 6px;
+    font-size: 0.78rem;
+    font-weight: 600;
+}
+
+.no-data-cell {
+    padding: 30px;
+    color: #94a3b8;
+    font-style: italic;
+}
+
+/* Responsive adjustments */
+@media (max-width: 900px) {
+    .filter-form-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+    .form-group.form-search {
+        grid-column: span 2;
+    }
+    .form-group.form-actions {
+        grid-column: span 2;
+    }
+    .club-hero-card {
+        flex-direction: column;
+        text-align: center;
+        padding: 24px;
+    }
+    .club-hero-crest-box {
+        margin: 0 auto;
+    }
+    .club-hero-tags {
+        justify-content: center;
+    }
+    .club-hero-meta-grid {
+        text-align: left;
     }
 }

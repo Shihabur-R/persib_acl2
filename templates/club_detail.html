@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ club.name }} - Skuad ACL2 2026/2027</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+    <header class="main-header" id="top">
+        <div class="header-container">
+            <div class="logo-area">
+                <div class="title-text">
+                    <span class="tournament-tag">AFC CHAMPIONS LEAGUE TWO</span>
+                    <h1>ACL2 <span>DASHBOARD</span></h1>
+                </div>
+            </div>
+            <nav class="nav-links">
+                <a href="/">Home</a>
+                <a href="/fixtures">Fixtures</a>
+                <a href="/clubs" class="active">Klub & Skuad</a>
+                <a href="/players">Daftar Pemain</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="content-wrapper">
+        <nav class="breadcrumb-nav" aria-label="Navigasi">
+            <a href="/">Home</a>
+            <span class="breadcrumb-sep">/</span>
+            <a href="/clubs">Klub</a>
+            <span class="breadcrumb-sep">/</span>
+            <span class="breadcrumb-current">{{ club.name }}</span>
+        </nav>
+
+        <!-- CLUB HERO BANNER -->
+        <section class="club-hero-card">
+            <div class="club-hero-crest-box">
+                {% if club.logo_url %}
+                <img src="{{ club.logo_url }}" alt="{{ club.name }} crest" class="club-hero-crest">
+                {% else %}
+                <span class="club-badge-hero">{{ club.abbreviation }}</span>
+                {% endif %}
+            </div>
+
+            <div class="club-hero-details">
+                <div class="club-hero-tags">
+                    <span class="hero-tag-group">GROUP {{ club.group_name }}</span>
+                    <span class="hero-tag-country">{{ club.country_flag }} {{ club.country }}</span>
+                    <span class="hero-tag-season">Musim 2026/2027</span>
+                </div>
+                <h1 class="club-hero-title">{{ club.name }}</h1>
+                <p class="club-hero-official">{{ club.official_name }}</p>
+
+                <div class="club-hero-meta-grid">
+                    <div class="meta-item">
+                        <span class="meta-label">PELATIH KEPALA</span>
+                        <span class="meta-val">{{ club.coach or '-' }}</span>
+                    </div>
+                    <div class="meta-item">
+                        <span class="meta-label">MARKAS / STADION</span>
+                        <span class="meta-val">{{ club.stadium or '-' }}</span>
+                    </div>
+                    {% if club.city %}
+                    <div class="meta-item">
+                        <span class="meta-label">KOTA ASAL</span>
+                        <span class="meta-val">{{ club.city }}</span>
+                    </div>
+                    {% endif %}
+                    {% if club.website %}
+                    <div class="meta-item">
+                        <span class="meta-label">WEBSITE RESMI</span>
+                        <span class="meta-val">
+                            <a href="{{ club.website }}" target="_blank" rel="noopener noreferrer" class="link-external">
+                                Kunjungi Situs Klub ↗
+                            </a>
+                        </span>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </section>
+
+        <!-- SQUAD SUMMARY COUNTERS -->
+        <section class="squad-summary-row">
+            <div class="summary-chip active" onclick="filterPosition('ALL')">
+                <span class="chip-count">{{ players|length }}</span>
+                <span class="chip-label">Total Skuad</span>
+            </div>
+            <div class="summary-chip chip-gk" onclick="filterPosition('GK')">
+                <span class="chip-count">{{ by_position.GK|length }}</span>
+                <span class="chip-label">Kiper</span>
+            </div>
+            <div class="summary-chip chip-df" onclick="filterPosition('DF')">
+                <span class="chip-count">{{ by_position.DF|length }}</span>
+                <span class="chip-label">Bek</span>
+            </div>
+            <div class="summary-chip chip-mf" onclick="filterPosition('MF')">
+                <span class="chip-count">{{ by_position.MF|length }}</span>
+                <span class="chip-label">Gelandang</span>
+            </div>
+            <div class="summary-chip chip-fw" onclick="filterPosition('FW')">
+                <span class="chip-count">{{ by_position.FW|length }}</span>
+                <span class="chip-label">Penyerang</span>
+            </div>
+        </section>
+
+        <!-- SQUAD TABLE -->
+        <section class="squad-section">
+            <div class="section-header-flex">
+                <h2 class="section-title">DAFTAR NAMA PEMAIN & NOMOR PUNGGUNG (2026/2027)</h2>
+                <div class="squad-search-box">
+                    <input type="text" id="squad-filter-input" placeholder="Cari nama atau nomor..." onkeyup="filterSquadTable()">
+                </div>
+            </div>
+
+            <div class="table-responsive">
+                <table class="j-table squad-roster-table" id="squad-table">
+                    <thead>
+                        <tr>
+                            <th class="text-center th-num">NO</th>
+                            <th class="text-left">NAMA PEMAIN</th>
+                            <th class="text-center">POSISI</th>
+                            <th class="text-left">KEBANGSAAN</th>
+                            <th class="text-center">STATUS</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for player in players %}
+                        <tr class="player-row" data-pos="{{ player.position_code }}" data-search="{{ player.name|lower }} {{ player.jersey_number or '' }} {{ player.nationality|lower }}">
+                            <td class="text-center">
+                                {% if player.jersey_number %}
+                                <span class="jersey-pill">#{{ player.jersey_number }}</span>
+                                {% else %}
+                                <span class="jersey-pill unassigned">-</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-left font-bold player-name-cell">
+                                <span class="player-name-text">{{ player.name }}</span>
+                                {% if player.is_captain %}
+                                <span class="captain-badge" title="Kapten Tim">★ KAPTEN</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-center">
+                                <span class="pos-badge pos-{{ player.position_code|lower }}">
+                                    {{ player.position }}
+                                </span>
+                            </td>
+                            <td class="text-left">
+                                <span class="nationality-cell">
+                                    <span class="flag-icon">{{ player.nationality_flag }}</span>
+                                    <span class="nat-name">{{ player.nationality }}</span>
+                                </span>
+                            </td>
+                            <td class="text-center text-muted">
+                                2026/27
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- SIBLING CLUBS IN GROUP -->
+        {% if sibling_clubs %}
+        <section class="sibling-clubs-section">
+            <h3 class="section-title">KLUB LAIN DI GROUP {{ club.group_name }}</h3>
+            <div class="sibling-clubs-grid">
+                {% for sibling in sibling_clubs %}
+                <a href="{{ url_for('club_detail', slug=sibling.slug) }}" class="sibling-club-card">
+                    {% if sibling.logo_url %}
+                    <img src="{{ sibling.logo_url }}" alt="{{ sibling.name }}" class="sibling-mini-logo">
+                    {% else %}
+                    <span class="club-badge">{{ sibling.abbreviation }}</span>
+                    {% endif %}
+                    <div class="sibling-info">
+                        <span class="sibling-name">{{ sibling.name }}</span>
+                        <span class="sibling-country">{{ sibling.country_flag }} {{ sibling.country }}</span>
+                    </div>
+                </a>
+                {% endfor %}
+            </div>
+        </section>
+        {% endif %}
+    </main>
+
+    <footer class="main-footer">
+        <p>Database ACL Two 2026/2027 · Roster pemain terdaftar resmi untuk kompetisi AFC.</p>
+    </footer>
+
+    <a class="scroll-to-top" href="#top" aria-label="Kembali ke atas" title="Kembali ke atas">↑</a>
+    <script src="{{ url_for('static', filename='js/scroll-to-top.js') }}"></script>
+    <script>
+        let currentPosFilter = 'ALL';
+
+        function filterPosition(pos) {
+            currentPosFilter = pos;
+            document.querySelectorAll('.summary-chip').forEach(el => el.classList.remove('active'));
+            if (pos === 'ALL') {
+                document.querySelector('.summary-chip').classList.add('active');
+            } else {
+                const target = document.querySelector('.chip-' + pos.toLowerCase());
+                if (target) target.classList.add('active');
+            }
+            filterSquadTable();
+        }
+
+        function filterSquadTable() {
+            const input = document.getElementById('squad-filter-input');
+            const searchVal = input ? input.value.toLowerCase().trim() : '';
+            const rows = document.querySelectorAll('.player-row');
+
+            rows.forEach(row => {
+                const rowPos = row.getAttribute('data-pos');
+                const rowSearch = row.getAttribute('data-search') || '';
+
+                const matchesPos = (currentPosFilter === 'ALL' || rowPos === currentPosFilter);
+                const matchesSearch = !searchVal || rowSearch.includes(searchVal);
+
+                if (matchesPos && matchesSearch) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        }
+    </script>
+</body>
+</html>

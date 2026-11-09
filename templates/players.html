@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Daftar Pemain ACL2 - Musim 2026/2027</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+    <header class="main-header" id="top">
+        <div class="header-container">
+            <div class="logo-area">
+                <div class="title-text">
+                    <span class="tournament-tag">AFC CHAMPIONS LEAGUE TWO</span>
+                    <h1>ACL2 <span>DASHBOARD</span></h1>
+                </div>
+            </div>
+            <nav class="nav-links">
+                <a href="/">Home</a>
+                <a href="/fixtures">Fixtures</a>
+                <a href="/clubs">Klub & Skuad</a>
+                <a href="/players" class="active">Daftar Pemain</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="content-wrapper">
+        <div class="dashboard-intro">
+            <h1 class="jl-page-title">Direktori Pemain ACL2 2026/2027</h1>
+            <p class="group-label">Pencarian & Database Nama Pemain Lengkap dengan Nomor Punggung</p>
+            <div class="timezone-notice">
+                <span class="timezone-pill">
+                    <span class="timezone-dot" aria-hidden="true"></span>
+                    <span>Ditemukan: {{ players|length }} Pemain</span>
+                </span>
+            </div>
+        </div>
+
+        <!-- FILTER FORM -->
+        <section class="players-filter-panel">
+            <form method="GET" action="/players" class="filter-form-grid">
+                <div class="form-group form-search">
+                    <label for="filter-q">Cari Nama / Nomor / Kebangsaan</label>
+                    <input type="text" id="filter-q" name="q" value="{{ current_q }}" placeholder="Contoh: Klok, 23, Reijnders, Brazil...">
+                </div>
+
+                <div class="form-group">
+                    <label for="filter-group">Grup</label>
+                    <select id="filter-group" name="group">
+                        <option value="">Semua Grup (E–H)</option>
+                        {% for g in ['E', 'F', 'G', 'H'] %}
+                        <option value="{{ g }}" {% if current_group == g %}selected{% endif %}>Group {{ g }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="filter-club">Klub Peserta</label>
+                    <select id="filter-club" name="club">
+                        <option value="">Semua Klub</option>
+                        {% for c in all_clubs %}
+                        <option value="{{ c.id }}" {% if current_club == c.id %}selected{% endif %}>
+                            [{{ c.group_name }}] {{ c.name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="filter-pos">Posisi</label>
+                    <select id="filter-pos" name="pos">
+                        <option value="">Semua Posisi</option>
+                        <option value="GK" {% if current_pos == 'GK' %}selected{% endif %}>Kiper (GK)</option>
+                        <option value="DF" {% if current_pos == 'DF' %}selected{% endif %}>Bek (DF)</option>
+                        <option value="MF" {% if current_pos == 'MF' %}selected{% endif %}>Gelandang (MF)</option>
+                        <option value="FW" {% if current_pos == 'FW' %}selected{% endif %}>Penyerang (FW)</option>
+                    </select>
+                </div>
+
+                <div class="form-group form-actions">
+                    <button type="submit" class="btn-filter-submit">Terapkan Filter</button>
+                    {% if current_q or current_group or current_club or current_pos %}
+                    <a href="/players" class="btn-filter-reset">Reset</a>
+                    {% endif %}
+                </div>
+            </form>
+        </section>
+
+        <!-- PLAYERS TABLE -->
+        <section class="table-section">
+            <h2 class="section-title">DAFTAR PEMAIN ({{ players|length }})</h2>
+            <div class="table-responsive">
+                <table class="j-table squad-roster-table">
+                    <thead>
+                        <tr>
+                            <th class="text-center th-num">NO</th>
+                            <th class="text-left">NAMA PEMAIN</th>
+                            <th class="text-left">KLUB PESERTA</th>
+                            <th class="text-center">GRUP</th>
+                            <th class="text-center">POSISI</th>
+                            <th class="text-left">KEBANGSAAN</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% if players %}
+                            {% for player in players %}
+                            <tr>
+                                <td class="text-center">
+                                    {% if player.jersey_number %}
+                                    <span class="jersey-pill">#{{ player.jersey_number }}</span>
+                                    {% else %}
+                                    <span class="jersey-pill unassigned">-</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-left font-bold">
+                                    <span class="player-name-text">{{ player.name }}</span>
+                                    {% if player.is_captain %}
+                                    <span class="captain-badge" title="Kapten Tim">★ KAPTEN</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-left">
+                                    <a href="{{ url_for('club_detail', slug=player.club_slug) }}" class="player-club-link">
+                                        {% if player.club_logo %}
+                                        <img src="{{ player.club_logo }}" alt="" class="table-mini-logo">
+                                        {% endif %}
+                                        <span>{{ player.club_name }}</span>
+                                    </a>
+                                </td>
+                                <td class="text-center">
+                                    <span class="group-tag-pill">Grup {{ player.group_name }}</span>
+                                </td>
+                                <td class="text-center">
+                                    <span class="pos-badge pos-{{ player.position_code|lower }}">
+                                        {{ player.position }}
+                                    </span>
+                                </td>
+                                <td class="text-left">
+                                    <span class="nationality-cell">
+                                        <span class="flag-icon">{{ player.nationality_flag }}</span>
+                                        <span class="nat-name">{{ player.nationality }}</span>
+                                    </span>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        {% else %}
+                            <tr>
+                                <td colspan="6" class="text-center no-data-cell">
+                                    Tidak ada data pemain yang cocok dengan kriteria filter pencarian.
+                                </td>
+                            </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+
+    <footer class="main-footer">
+        <p>Database ACL Two 2026/2027</p>
+    </footer>
+
+    <a class="scroll-to-top" href="#top" aria-label="Kembali ke atas" title="Kembali ke atas">↑</a>
+    <script src="{{ url_for('static', filename='js/scroll-to-top.js') }}"></script>
+</body>
+</html>
