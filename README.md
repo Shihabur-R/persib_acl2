@@ -1,37 +1,79 @@
-# ACL2 Dashboard - AFC Champions League Two 2026/27
+# ACL2 Dashboard
 
-## Identitas Proyek
-- **Mata Kuliah:** Rekayasa Perangkat Lunak (RPL)
-- **Tugas:** Tugas 1 Kelompok (Pertemuan 07)
-- **Judul Proyek:** Dashboard Klasemen & Jadwal Real-Time AFC Champions League Two 2026/27 (Grup E–H / Zone East)
+A lightweight, real-time web dashboard for tracking AFC Champions League Two (ACL2) standings and fixtures. Built with Python and Flask, this application fetches live data and automatically localizes match kick-off times to the user's timezone.
 
-## Deskripsi Aplikasi
-ACL2 Dashboard adalah aplikasi web berbasis Flask yang menyajikan data jadwal pertandingan dan klasemen grup secara real-time untuk kompetisi AFC Champions League Two 2026/27 (khusus Zona Timur / Grup E–H yang melibatkan Persib Bandung). Data diambil secara dinamis dari API resmi AFC dan disesuaikan dengan zona waktu lokal pengguna (WIB, WITA, WIT).
+## Features
 
-## Fitur Utama
-1. **Klasemen Real-Time (Grup E–H):** Menampilkan perolehan poin, jumlah main, menang, seri, kalah, serta selisih gol.
-2. **Jadwal Pertandingan (Fixtures):** Menampilkan jadwal lengkap per grup beserta status pertandingan.
-3. **Konversi Waktu Otomatis (Local Time):** Menyesuaikan tampilan zona waktu pertandingan secara otomatis di browser pengguna.
-4. **Navigasi Responsif & Scroll-to-Top:** Desain antarmuka rapi, responsif, dan mudah diakses dari perangkat mobile maupun desktop.
+- **Live Standings:** Real-time points, wins, draws, and losses tracking.
+- **Match Fixtures:** Up-to-date scheduling and match results.
+- **Auto Timezone Localization:** Converts ISO 8601 timestamps from the API directly into the user's local browser timezone using vanilla JavaScript.
+- **Resilient Fallback:** Implements gracefully handled mock-data failovers if the upstream API becomes unavailable or rate-limited.
+- **Responsive UI:** Clean, mobile-first design that works seamlessly across desktop and mobile devices.
 
-## Teknologi yang Digunakan
-- **Backend:** Python 3 (Flask)
-- **Frontend:** HTML5, CSS3, JavaScript (Vanilla JS)
-- **Integrasi Data:** REST API AFC (External Data Fetching)
+## Tech Stack
 
-## Struktur Folder
+- **Backend:** Python 3, Flask
+- **Frontend:** HTML5, CSS3, Vanilla JS
+- **Templating:** Jinja2
+
+## Getting Started
+
+### Prerequisites
+
+- Python 3.8 or higher
+- `pip` package manager
+
+### Installation
+
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/Shihabur-R/persib_acl2.git
+   cd persib_acl2
+   ```
+
+2. Create and activate a virtual environment (recommended):
+   ```bash
+   # On macOS/Linux
+   python3 -m venv venv
+   source venv/bin/activate
+
+   # On Windows
+   python -m venv venv
+   venv\Scripts\activate
+   ```
+
+3. Install the required dependencies:
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+### Running the Application
+
+Start the development server:
+
+```bash
+python app.py
+```
+*The application will be available at `http://127.0.0.1:5000/`*
+
+For production deployment, it is recommended to use a WSGI server like Gunicorn:
+```bash
+gunicorn --workers 2 --bind 0.0.0.0:5000 app:app
+```
+
+## Project Structure
+
 ```text
-persib_acl2/
-├── app.py                  # Server utama Flask & Endpoint Routing
-├── requirements.txt        # Daftar dependensi Python
-├── README.md               # Dokumentasi petunjuk penggunaan
-├── static/
-│   ├── css/
-│   │   └── style.css       # Styling UI/UX
-│   ├── js/
-│   │   ├── local-time.js   # Script konversi zona waktu
-│   │   └── scroll-to-top.js# Script tombol kembali ke atas
-│   └── images/             # Asset logo klub & kompetisi
-└── templates/
-    ├── index.html          # Halaman Klasemen
-    └── fixtures.html       # Halaman Jadwal Pertandingan
+├── app.py               # Main Flask application and routes
+├── requirements.txt     # Python dependencies
+├── static/              # CSS, JavaScript, and Image assets
+└── templates/           # Jinja2 HTML templates
+```
+
+## Contributing
+
+Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
+
+## License
+
+[MIT](https://choosealicense.com/licenses/mit/)
