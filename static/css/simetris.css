@@ -1,7 +1,15 @@
 /* ==========================================================================
-   PERSIB Simetris — Feature-specific components
+   ACL2 Analytics & Simulation — Feature-specific components
    Loaded in addition to the base style.css to keep the design system intact.
    ========================================================================== */
+
+/* Judul aplikasi lebih panjang dari sebelumnya; diperkecil agar header dan
+   navigasi tetap rapi dalam satu baris pada layar lebar. */
+.logo-area h1 {
+    font-size: 1.55rem;
+    line-height: 1.2;
+    white-space: nowrap;
+}
 
 .tagline {
     font-size: 0.85rem;
@@ -240,6 +248,116 @@
 
 .inline-form {
     display: inline;
+}
+
+/* --- Navigation: hamburger (mobile only) --- */
+.nav-toggle {
+    display: none;
+    flex-direction: column;
+    justify-content: center;
+    gap: 4px;
+    width: 44px;
+    height: 40px;
+    padding: 8px;
+    background: rgba(255, 255, 255, 0.12);
+    border: 1px solid rgba(255, 255, 255, 0.35);
+    border-radius: 10px;
+    cursor: pointer;
+}
+
+.nav-toggle-bar {
+    display: block;
+    height: 2px;
+    width: 100%;
+    background: #ffffff;
+    border-radius: 2px;
+}
+
+/* Tablet: menu turun ke baris sendiri, tetap terlihat penuh (tidak terpotong). */
+@media (max-width: 1100px) {
+    .header-container { justify-content: center; }
+    .nav-links { justify-content: center; width: 100%; }
+}
+
+/* Ponsel: menu dilipat ke tombol hamburger agar tidak menumpuk. */
+@media (max-width: 760px) {
+    .header-container { justify-content: space-between; }
+    .nav-toggle { display: flex; }
+    .nav-links {
+        display: none;
+        flex-direction: column;
+        align-items: stretch;
+        width: 100%;
+        gap: 4px;
+        padding-top: 8px;
+    }
+    .nav-links.is-open { display: flex; }
+    .nav-links a { text-align: center; }
+    /* Izinkan judul membungkus di layar sempit agar tidak terpotong. */
+    .logo-area h1 { font-size: 1.2rem; white-space: normal; }
+}
+
+/* --- Data provenance banner --- */
+.data-source-banner {
+    background: #422006;
+    border: 1px solid #a16207;
+    color: #fde68a;
+    border-radius: 10px;
+    padding: 12px 16px;
+    font-size: 0.9rem;
+    margin: 16px 0;
+}
+
+/* --- Insights: stacked composition bar --- */
+.stacked-bar {
+    display: flex;
+    width: 100%;
+    min-width: 140px;
+    height: 14px;
+    border-radius: 999px;
+    overflow: hidden;
+    background: #0f0f2d;
+}
+
+.stacked-seg {
+    height: 100%;
+    display: block;
+}
+
+.seg-gk { background: #f59e0b; }
+.seg-df { background: #3944E7; }
+.seg-mf { background: #22d3ee; }
+.seg-fw { background: #f43f5e; }
+
+.chart-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-top: 12px;
+    font-size: 0.8rem;
+    color: var(--league-text-soft);
+}
+
+.legend-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.legend-swatch {
+    width: 12px;
+    height: 12px;
+    border-radius: 3px;
+    display: inline-block;
+}
+
+.limitation-list {
+    margin: 12px 0 0 18px;
+    display: grid;
+    gap: 10px;
+    color: var(--league-text-soft);
+    font-size: 0.9rem;
+    line-height: 1.6;
 }
 
 /* --- Empty state --- */

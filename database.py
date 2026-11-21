@@ -6,13 +6,21 @@ Menyediakan fungsi-fungsi query untuk klub dan pemain ACL2 Zona Timur (Grup E–
 
 import os
 import sqlite3
+from contextlib import contextmanager
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DB_PATH = os.path.join(BASE_DIR, "acl2.db")
 
 
+@contextmanager
 def get_db_connection():
-    """Membuka koneksi ke database SQLite dan mengembalikan objek connection dengan Row factory."""
+    """
+    Context manager koneksi SQLite dengan Row factory.
+
+    Koneksi selalu ditutup setelah blok selesai. Context manager bawaan sqlite3
+    hanya commit/rollback tanpa menutup koneksi, sehingga versi sebelumnya
+    membocorkan satu handle file per query.
+    """
     if not os.path.exists(DB_PATH):
         # Jalankan inisialisasi jika file database belum dibuat
         from build_database import seed_database
@@ -20,7 +28,10 @@ def get_db_connection():
 
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
-    return conn
+    try:
+        yield conn
+    finally:
+        conn.close()
 
 
 def get_all_clubs():

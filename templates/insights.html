@@ -1,0 +1,142 @@
+{% extends "_layout.html" %}
+{% block title %}Temuan Statistik — ACL2 Analytics &amp; Simulation{% endblock %}
+
+{% block content %}
+<main class="content-wrapper">
+    <div class="dashboard-intro">
+        <h1 class="jl-page-title">Temuan Statistik</h1>
+        <p class="group-label">Dua temuan dari dataset ACL2 2026/27 Zona Timur</p>
+        <div class="timezone-notice">
+            <span class="timezone-pill">
+                <span class="timezone-dot" aria-hidden="true"></span>
+                <span>{{ db_stats.total_clubs }} Klub · {{ db_stats.total_players }} Pemain</span>
+            </span>
+        </div>
+    </div>
+
+    <!-- TEMUAN 1 -->
+    <section class="table-section">
+        <h2 class="section-title">TEMUAN 1 · DISTRIBUSI POSISI SKUAD PER KLUB</h2>
+        <p class="small-note">
+            Jumlah pemain per lini (GK/DF/MF/FW). Bar menunjukkan proporsi tiap lini
+            terhadap total skuad klub tersebut.
+        </p>
+        <div class="table-responsive">
+            <table class="j-table">
+                <thead>
+                    <tr>
+                        <th class="text-left">KLUB</th>
+                        <th class="text-center">GRUP</th>
+                        {% for pos in positions %}
+                        <th class="text-center">{{ pos }}</th>
+                        {% endfor %}
+                        <th class="text-center">TOTAL</th>
+                        <th class="text-left">KOMPOSISI</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in composition %}
+                    <tr>
+                        <td class="text-left font-bold">{{ item.club.name }}</td>
+                        <td class="text-center"><span class="group-tag-pill">{{ item.club.group_name }}</span></td>
+                        {% for pos in positions %}
+                        <td class="text-center">{{ item.counts[pos] }}</td>
+                        {% endfor %}
+                        <td class="text-center font-bold">{{ item.total }}</td>
+                        <td class="text-left">
+                            <div class="stacked-bar" role="img"
+                                 aria-label="Komposisi skuad {{ item.club.name }}">
+                                {% for pos in positions %}
+                                <span class="stacked-seg seg-{{ pos|lower }}"
+                                      style="width: {{ item.shares[pos] }}%"
+                                      title="{{ pos }}: {{ item.counts[pos] }} ({{ item.shares[pos] }}%)"></span>
+                                {% endfor %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr><td colspan="8" class="text-center no-data-cell">Data skuad belum tersedia.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <p class="chart-legend">
+            {% for pos in positions %}
+            <span class="legend-item"><span class="legend-swatch seg-{{ pos|lower }}"></span>{{ pos }}</span>
+            {% endfor %}
+        </p>
+    </section>
+
+    <!-- TEMUAN 2 -->
+    <section class="table-section">
+        <h2 class="section-title">TEMUAN 2 · PERBANDINGAN KLASEMEN GRUP {{ group_letter }}</h2>
+        <form method="GET" action="{{ url_for('insights') }}" class="filter-panel">
+            <label for="insight-group">Pilih Grup
+                <select id="insight-group" name="group">
+                    {% for g in groups %}
+                    <option value="{{ g }}" {% if g == group_letter %}selected{% endif %}>Group {{ g }}</option>
+                    {% endfor %}
+                </select>
+            </label>
+            <button type="submit" class="btn-primary">Tampilkan</button>
+        </form>
+        <div class="table-responsive">
+            <table class="j-table">
+                <thead>
+                    <tr>
+                        <th class="text-center">POS</th>
+                        <th class="text-left">KLUB</th>
+                        <th class="text-center">MAIN</th>
+                        <th class="text-center">M</th>
+                        <th class="text-center">S</th>
+                        <th class="text-center">K</th>
+                        <th class="text-center">GF</th>
+                        <th class="text-center">GA</th>
+                        <th class="text-center">SG</th>
+                        <th class="text-center">POIN</th>
+                        <th class="text-center">POIN/LAGA</th>
+                        <th class="text-center">JARAK KE PEMUNCAK</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in comparison %}
+                    <tr>
+                        <td class="text-center">{{ item.row.rank }}</td>
+                        <td class="text-left font-bold">{{ item.row.name }}</td>
+                        <td class="text-center">{{ item.row.played }}</td>
+                        <td class="text-center">{{ item.row.won }}</td>
+                        <td class="text-center">{{ item.row.drawn }}</td>
+                        <td class="text-center">{{ item.row.lost }}</td>
+                        <td class="text-center">{{ item.row.goals_for }}</td>
+                        <td class="text-center">{{ item.row.goals_against }}</td>
+                        <td class="text-center">{{ item.goal_diff }}</td>
+                        <td class="text-center font-bold">{{ item.row.points }}</td>
+                        <td class="text-center">{{ item.ppg }}</td>
+                        <td class="text-center">
+                            {% if item.gap_to_leader == 0 %}—{% else %}-{{ item.gap_to_leader }}{% endif %}
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr><td colspan="12" class="text-center no-data-cell">Klasemen grup ini belum tersedia.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <!-- KETERBATASAN -->
+    <section class="balance-card">
+        <h2 class="section-title">KETERBATASAN DATASET</h2>
+        <ul class="limitation-list">
+            <li>Proyeksi <strong>Scenario Duel tidak memodelkan gol</strong> — hanya poin dan
+                rasio menang/seri/kalah, sehingga selisih gol tidak berubah antar skenario.</li>
+            <li>Data skuad bersifat <strong>statis satu musim</strong> (2026/27); transfer, cedera,
+                dan perubahan nomor punggung tidak tercermin sampai database dibangun ulang.</li>
+            <li>Data fixtures &amp; klasemen bergantung pada <strong>API eksternal AFC</strong>;
+                saat API tidak terjangkau aplikasi memakai snapshot lokal yang bisa tertinggal.</li>
+            <li>Balance Meter mengukur <strong>kemiripan distribusi</strong>, bukan kualitas pemain —
+                skor tinggi tidak berarti kedua tim sama kuat.</li>
+        </ul>
+    </section>
+</main>
+{% endblock %}

@@ -1,32 +1,6 @@
-<!DOCTYPE html>
-<html lang="id">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Klub & Skuad Peserta ACL2 - 2026/2027</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
-</head>
-<body>
-    <header class="main-header" id="top">
-        <div class="header-container">
-            <div class="logo-area">
-                <div class="title-text">
-                    <span class="tournament-tag">AFC CHAMPIONS LEAGUE TWO</span>
-                    <h1>ACL2 <span>DASHBOARD</span></h1>
-                </div>
-            </div>
-            <nav class="nav-links">
-                <a href="/">Home</a>
-                <a href="/fixtures">Fixtures</a>
-                <a href="/clubs" class="active">Klub & Skuad</a>
-                <a href="/players">Daftar Pemain</a>
-            </nav>
-        </div>
-    </header>
-
+{% extends "_layout.html" %}
+{% block title %}Klub &amp; Skuad — ACL2 Analytics &amp; Simulation{% endblock %}
+{% block content %}
     <main class="content-wrapper">
         <div class="dashboard-intro">
             <h1 class="jl-page-title">Klub & Skuad ACL2 Zona Timur</h1>
@@ -89,7 +63,7 @@
                             <span class="counter-text">Pemain</span>
                         </div>
                         <a href="{{ url_for('club_detail', slug=club.slug) }}" class="btn-squad-link">
-                            Lihat Skuad →
+                            Lihat Skuad
                         </a>
                     </div>
                 </article>
@@ -97,12 +71,5 @@
             </div>
         </section>
         {% endfor %}
-    </main>
-
-    <footer class="main-footer">
-        <p>Database ACL Two 2026/2027 · Data skuad terverifikasi dari situs resmi klub & registrasi AFC.</p>
-    </footer>
-    <a class="scroll-to-top" href="#top" aria-label="Kembali ke atas" title="Kembali ke atas">↑</a>
-    <script src="{{ url_for('static', filename='js/scroll-to-top.js') }}"></script>
-</body>
-</html>
+    
+{% endblock %}

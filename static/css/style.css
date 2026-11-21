@@ -49,8 +49,10 @@ body {
     margin: 0 auto;
     padding: 0 20px;
     display: flex;
+    flex-wrap: wrap;
     justify-content: space-between;
     align-items: center;
+    gap: 12px 20px;
 }
 
 .logo-area .tournament-tag {
@@ -74,15 +76,26 @@ body {
     color: var(--league-text);
 }
 
+/* Nav memakai flex + gap (bukan margin-left) agar 9 menu tetap satu baris
+   pada layar lebar dan turun baris dengan rapi pada layar sempit. */
+.nav-links {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 6px;
+    row-gap: 8px;
+}
+
 .nav-links a {
     color: #ffffff;
     text-decoration: none;
     font-weight: 600;
-    font-size: 0.95rem;
-    margin-left: 25px;
-    padding: 8px 18px;
+    font-size: 0.9rem;
+    padding: 7px 14px;
     border-radius: 25px;
-    transition: all 0.3s ease;
+    white-space: nowrap;
+    transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 .nav-links a:hover, .nav-links a.active {
@@ -771,14 +784,15 @@ body {
     align-items: center;
     background: var(--league-blue);
     border: 1px solid rgba(255, 255, 255, 0.4);
-    border-radius: 50%;
+    border-radius: 24px;
     bottom: 24px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
     color: #fff;
     display: flex;
-    font-size: 1.6rem;
+    font-size: 0.85rem;
     font-weight: 700;
-    height: 48px;
+    height: 40px;
+    padding: 0 18px;
     justify-content: center;
     line-height: 1;
     position: fixed;
@@ -789,7 +803,7 @@ body {
     visibility: hidden;
     opacity: 0;
     pointer-events: none;
-    width: 48px;
+    width: auto;
     z-index: 99;
     cursor: pointer;
     user-select: none;

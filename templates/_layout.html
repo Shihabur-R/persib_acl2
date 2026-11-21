@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}PERSIB Simetris — Mana yang Paling Seimbang?{% endblock %}</title>
+    <title>{% block title %}ACL2 Analytics &amp; Simulation{% endblock %}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/simetris.css') }}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -16,28 +16,56 @@
             <div class="logo-area">
                 <div class="title-text">
                     <span class="tournament-tag">AFC CHAMPIONS LEAGUE TWO · EAST ZONE</span>
-                    <h1>PERSIB <span>SIMETRIS</span></h1>
-                    <p class="tagline">Mana yang Paling Seimbang?</p>
+                    <h1>ACL2 <span>ANALYTICS &amp; SIMULATION</span></h1>
                 </div>
             </div>
-            <nav class="nav-links" aria-label="Main navigation">
-                <a href="{{ url_for('home') }}" {% if request.endpoint == 'home' %}class="active"{% endif %}>Home</a>
-                <a href="{{ url_for('balance') }}" {% if request.endpoint == 'balance' %}class="active"{% endif %}>Balance Meter</a>
-                <a href="{{ url_for('duel') }}" {% if request.endpoint == 'duel' %}class="active"{% endif %}>Scenario Duel</a>
-                <a href="{{ url_for('picks') }}" {% if request.endpoint == 'picks' %}class="active"{% endif %}>Saved Picks</a>
-                <a href="{{ url_for('fixtures') }}" {% if request.endpoint == 'fixtures' %}class="active"{% endif %}>Fixtures</a>
-                <a href="{{ url_for('clubs') }}" {% if request.endpoint == 'clubs' %}class="active"{% endif %}>Clubs</a>
-                <a href="{{ url_for('players') }}" {% if request.endpoint == 'players' %}class="active"{% endif %}>Players</a>
+            <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="primary-nav" aria-label="Buka menu navigasi">
+                <span class="nav-toggle-bar"></span>
+                <span class="nav-toggle-bar"></span>
+                <span class="nav-toggle-bar"></span>
+            </button>
+            <nav class="nav-links" id="primary-nav" aria-label="Navigasi utama">
+                {% set nav_items = [
+                    ('home', 'Home', 'Ringkasan grup'),
+                    ('balance', 'Balance Meter', 'Ukur keseimbangan dua sisi'),
+                    ('duel', 'Scenario Duel', 'Bandingkan dua proyeksi hasil'),
+                    ('picks', 'Saved Picks', 'Perbandingan tersimpan'),
+                    ('insights', 'Insights', 'Temuan statistik & keterbatasan'),
+                    ('fixtures', 'Fixtures', 'Jadwal & hasil pertandingan'),
+                    ('clubs', 'Klub & Skuad', 'Profil 16 klub peserta'),
+                    ('players', 'Daftar Pemain', 'Cari & filter pemain')
+                ] %}
+                {% for endpoint, label, hint in nav_items %}
+                <a href="{{ url_for(endpoint) }}" title="{{ hint }}"
+                   {% if request.endpoint == endpoint %}class="active" aria-current="page"{% endif %}>{{ label }}</a>
+                {% endfor %}
             </nav>
         </div>
     </header>
+
+    {% if season and season.data_status and 'snapshot' in season.data_status.values() %}
+    <div class="content-wrapper">
+        <p class="data-source-banner" role="status">
+            Menampilkan <strong>snapshot lokal</strong> — API AFC sedang tidak terjangkau.
+            Data mungkin tidak sebaru pertandingan terakhir.
+        </p>
+    </div>
+    {% endif %}
 
     {% block content %}{% endblock %}
 
     <footer class="main-footer">
         <div class="footer-container">
-            <p>PERSIB Simetris · Data: ACL2 2026/27 · Built on Flask & SQLite</p>
+            <p>ACL2 Analytics &amp; Simulation · Data: ACL2 2026/27 · Flask &amp; SQLite</p>
+            <p class="small-note">
+                Sumber: <a href="{{ source_url }}" target="_blank" rel="noopener noreferrer">Situs resmi AFC</a>
+                · {{ season.source_label if season else 'AFC Public API' }}
+            </p>
         </div>
     </footer>
+    <a class="scroll-to-top" href="#top" aria-label="Kembali ke atas" title="Kembali ke atas">Atas</a>
+    <script src="{{ url_for('static', filename='js/scroll-to-top.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/nav-toggle.js') }}"></script>
+    {% block scripts %}{% endblock %}
 </body>
 </html>

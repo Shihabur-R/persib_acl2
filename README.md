@@ -4,11 +4,27 @@ A lightweight, real-time web dashboard for tracking AFC Champions League Two (AC
 
 ## Features
 
-- **Live Standings:** Real-time points, wins, draws, and losses tracking.
-- **Match Fixtures:** Up-to-date scheduling and match results.
-- **Auto Timezone Localization:** Converts ISO 8601 timestamps from the API directly into the user's local browser timezone using vanilla JavaScript.
-- **Resilient Fallback:** Implements gracefully handled mock-data failovers if the upstream API becomes unavailable or rate-limited.
-- **Responsive UI:** Clean, mobile-first design that works seamlessly across desktop and mobile devices.
+### ACL2 Analytics & Simulation
+
+- **Balance Meter (`/balance`):** Scores how similar two sides are (0–100) in three
+  modes: squad composition, home vs away record, and head-to-head standings.
+- **Scenario Duel (`/duel`):** Projects two match outcomes side by side and reports
+  which is more advantageous and which produces a more even win/draw/loss record.
+- **Saved Picks (`/picks`):** Persists comparisons in SQLite with validation for
+  empty, over-long, malformed, and duplicate entries.
+- **Statistical Insights (`/insights`):** Two dataset findings — squad position
+  distribution per club, and a per-group standings comparison (goal difference,
+  points per game, gap to leader) — plus an explicit dataset-limitations section.
+
+### Dashboard
+
+- **Live Standings & Fixtures:** Points, results, and scheduling for East Zone Groups E–H.
+- **Auto Timezone Localization:** Converts UTC kick-off timestamps into the visitor's
+  local timezone (WIB/WITA/WIT aware) using vanilla JavaScript.
+- **Resilient Fallback:** Uses a bundled JSON snapshot when the AFC API is
+  unreachable or returns an empty payload, with a visible banner telling the user
+  the data is a local snapshot. Failed responses are cached to avoid repeated timeouts.
+- **Responsive UI:** Mobile-first layout across desktop and mobile devices.
 
 ## Tech Stack
 
@@ -52,22 +68,46 @@ A lightweight, real-time web dashboard for tracking AFC Champions League Two (AC
 Start the development server:
 
 ```bash
-python app_v2.py  # PERSIB Simetris application (recommended)
+python app_v2.py  # ACL2 Analytics & Simulation (recommended)
 # or run the legacy app: python app.py
 ```
 *The application will be available at `http://127.0.0.1:5000/`*
 
 For production deployment, it is recommended to use a WSGI server like Gunicorn:
 ```bash
-gunicorn --workers 2 --bind 0.0.0.0:5000 app:app
+gunicorn --workers 2 --bind 0.0.0.0:5000 app_v2:app
 ```
+
+Set a real secret key in production (used for flash messages):
+
+```bash
+export FLASK_SECRET_KEY="your-random-secret"
+```
+
+### Running the Tests
+
+```bash
+python -m pytest tests/test_metrics.py -v
+```
+
+Covers TC-01..TC-05: squad balance scoring, empty-data handling, scenario
+projection, pick validation, and pick deletion.
 
 ## Project Structure
 
 ```text
-├── app.py               # Main Flask application and routes
+├── app_v2.py            # ACL2 Analytics & Simulation routes (recommended entrypoint)
+├── app.py               # Legacy dashboard application
+├── data_sources.py      # Club/player reads, AFC API + TTL cache, snapshot fallback
+├── metrics.py           # Balance scores, scenario projection, statistical findings
+├── picks_store.py       # Saved-pick persistence and validation
+├── database.py          # SQLite helpers
+├── build_database.py    # Database seeding
+├── acl2.db              # SQLite dataset (16 clubs, East Zone squads)
+├── data/                # Bundled fallback snapshot (snapshot_east.json)
+├── tests/               # Unit tests for metrics and picks
 ├── requirements.txt     # Python dependencies
-├── static/              # CSS, JavaScript, and Image assets
+├── static/              # CSS, JavaScript, and image assets
 └── templates/           # Jinja2 HTML templates
 ```
 

@@ -1,9 +1,9 @@
 {% extends "_layout.html" %}
-{% block title %}Scenario Duel — PERSIB Simetris{% endblock %}
+{% block title %}Scenario Duel — ACL2 Analytics &amp; Simulation{% endblock %}
 {% block content %}
 <main class="content-wrapper">
     <div class="dashboard-intro">
-        <h1 class="jl-page-title">🥊 Scenario Duel</h1>
+        <h1 class="jl-page-title">Scenario Duel</h1>
         <p class="group-label">Bandingkan dua skenario hasil pertandingan berdampingan dan lihat mana yang paling menguntungkan.</p>
     </div>
 
@@ -17,26 +17,29 @@
             </select>
         </label>
         <label>
-            Scenario A
+            Skenario A
             <select name="result_a">
-                <option value="win">Win</option>
-                <option value="draw">Draw</option>
-                <option value="loss">Loss</option>
+                {% for value in results %}
+                <option value="{{ value }}" {% if value == result_a %}selected{% endif %}>{{ result_labels[value] }}</option>
+                {% endfor %}
             </select>
         </label>
         <label>
-            Scenario B
+            Skenario B
             <select name="result_b">
-                <option value="win">Win</option>
-                <option value="draw" selected>Draw</option>
-                <option value="loss">Loss</option>
+                {% for value in results %}
+                <option value="{{ value }}" {% if value == result_b %}selected{% endif %}>{{ result_labels[value] }}</option>
+                {% endfor %}
             </select>
         </label>
-        <button type="submit" class="btn-primary">Compare</button>
+        <button type="submit" class="btn-primary">Bandingkan</button>
     </form>
 
     {% if base %}
-    <p class="group-label">Base standing: {{ base.name }} — {{ base.played }} played, {{ base.points }} points</p>
+    <p class="group-label">Rekor saat ini: {{ base.name }} — {{ base.played }} laga, {{ base.points }} poin</p>
+    {% endif %}
+    {% if note %}
+    <p class="small-note" role="status">Catatan: {{ note }}</p>
     {% endif %}
 
     {% if scenario_result %}
@@ -61,9 +64,22 @@
 
     <section class="verdict-card">
         <h3>Verdict</h3>
-        <p>Most advantageous: <strong>{{ scenario_result.verdict.advantage }}</strong></p>
-        <p>Balance score: <strong>{{ scenario_result.verdict.balance_score }}</strong> — {{ scenario_result.verdict.balance_label_en }}</p>
-        <p class="small-note">Goals for/against are not modelled in this projection; only points and match outcome ratio are compared.</p>
+        <p>Paling menguntungkan: <strong>{{ scenario_result.verdict.advantage_label }}</strong></p>
+        <p>Rekor paling merata: <strong>{{ scenario_result.verdict.more_balanced }}</strong>
+            (A: {{ scenario_result.verdict.symmetry_a }} · B: {{ scenario_result.verdict.symmetry_b }})</p>
+        <p>Skor kesimetrisan: <strong>{{ scenario_result.verdict.balance_score }}</strong>
+            — {{ scenario_result.verdict.balance_label_id }}</p>
+        <p>Kedekatan poin/laga kedua skenario: <strong>{{ scenario_result.verdict.gap_score }}</strong></p>
+        <p class="small-note">
+            Gol tidak dimodelkan dalam proyeksi ini; hanya poin dan rasio hasil laga
+            yang dibandingkan. Skor kesimetrisan mengukur seberapa merata sebaran
+            menang/seri/kalah (100 = merata sempurna), bukan kekuatan tim.
+        </p>
+        <p>
+            <a class="btn-primary" href="{{ url_for('picks', club=selected_club.slug, result_a=scenario_result.result_a, result_b=scenario_result.result_b) }}">
+                Simpan sebagai Pick
+            </a>
+        </p>
     </section>
     {% endif %}
 </main>

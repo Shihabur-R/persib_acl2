@@ -1,32 +1,6 @@
-<!DOCTYPE html>
-<html lang="id">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ club.name }} - Skuad ACL2 2026/2027</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
-</head>
-<body>
-    <header class="main-header" id="top">
-        <div class="header-container">
-            <div class="logo-area">
-                <div class="title-text">
-                    <span class="tournament-tag">AFC CHAMPIONS LEAGUE TWO</span>
-                    <h1>ACL2 <span>DASHBOARD</span></h1>
-                </div>
-            </div>
-            <nav class="nav-links">
-                <a href="/">Home</a>
-                <a href="/fixtures">Fixtures</a>
-                <a href="/clubs" class="active">Klub & Skuad</a>
-                <a href="/players">Daftar Pemain</a>
-            </nav>
-        </div>
-    </header>
-
+{% extends "_layout.html" %}
+{% block title %}{{ club.name }} — ACL2 Analytics &amp; Simulation{% endblock %}
+{% block content %}
     <main class="content-wrapper">
         <nav class="breadcrumb-nav" aria-label="Navigasi">
             <a href="/">Home</a>
@@ -75,7 +49,7 @@
                         <span class="meta-label">WEBSITE RESMI</span>
                         <span class="meta-val">
                             <a href="{{ club.website }}" target="_blank" rel="noopener noreferrer" class="link-external">
-                                Kunjungi Situs Klub ↗
+                                Kunjungi Situs Klub
                             </a>
                         </span>
                     </div>
@@ -141,7 +115,7 @@
                             <td class="text-left font-bold player-name-cell">
                                 <span class="player-name-text">{{ player.name }}</span>
                                 {% if player.is_captain %}
-                                <span class="captain-badge" title="Kapten Tim">★ KAPTEN</span>
+                                <span class="captain-badge" title="Kapten Tim">KAPTEN</span>
                                 {% endif %}
                             </td>
                             <td class="text-center">
@@ -186,48 +160,43 @@
             </div>
         </section>
         {% endif %}
-    </main>
+    
+{% endblock %}
 
-    <footer class="main-footer">
-        <p>Database ACL Two 2026/2027 · Roster pemain terdaftar resmi untuk kompetisi AFC.</p>
-    </footer>
-
-    <a class="scroll-to-top" href="#top" aria-label="Kembali ke atas" title="Kembali ke atas">↑</a>
-    <script src="{{ url_for('static', filename='js/scroll-to-top.js') }}"></script>
+{% block scripts %}
     <script>
-        let currentPosFilter = 'ALL';
-
-        function filterPosition(pos) {
-            currentPosFilter = pos;
-            document.querySelectorAll('.summary-chip').forEach(el => el.classList.remove('active'));
-            if (pos === 'ALL') {
-                document.querySelector('.summary-chip').classList.add('active');
-            } else {
-                const target = document.querySelector('.chip-' + pos.toLowerCase());
-                if (target) target.classList.add('active');
-            }
-            filterSquadTable();
-        }
-
-        function filterSquadTable() {
-            const input = document.getElementById('squad-filter-input');
-            const searchVal = input ? input.value.toLowerCase().trim() : '';
-            const rows = document.querySelectorAll('.player-row');
-
-            rows.forEach(row => {
-                const rowPos = row.getAttribute('data-pos');
-                const rowSearch = row.getAttribute('data-search') || '';
-
-                const matchesPos = (currentPosFilter === 'ALL' || rowPos === currentPosFilter);
-                const matchesSearch = !searchVal || rowSearch.includes(searchVal);
-
-                if (matchesPos && matchesSearch) {
-                    row.style.display = '';
+            let currentPosFilter = 'ALL';
+    
+            function filterPosition(pos) {
+                currentPosFilter = pos;
+                document.querySelectorAll('.summary-chip').forEach(el => el.classList.remove('active'));
+                if (pos === 'ALL') {
+                    document.querySelector('.summary-chip').classList.add('active');
                 } else {
-                    row.style.display = 'none';
+                    const target = document.querySelector('.chip-' + pos.toLowerCase());
+                    if (target) target.classList.add('active');
                 }
-            });
-        }
-    </script>
-</body>
-</html>
+                filterSquadTable();
+            }
+    
+            function filterSquadTable() {
+                const input = document.getElementById('squad-filter-input');
+                const searchVal = input ? input.value.toLowerCase().trim() : '';
+                const rows = document.querySelectorAll('.player-row');
+    
+                rows.forEach(row => {
+                    const rowPos = row.getAttribute('data-pos');
+                    const rowSearch = row.getAttribute('data-search') || '';
+    
+                    const matchesPos = (currentPosFilter === 'ALL' || rowPos === currentPosFilter);
+                    const matchesSearch = !searchVal || rowSearch.includes(searchVal);
+    
+                    if (matchesPos && matchesSearch) {
+                        row.style.display = '';
+                    } else {
+                        row.style.display = 'none';
+                    }
+                });
+            }
+        </script>
+{% endblock %}

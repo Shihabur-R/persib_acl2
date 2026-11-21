@@ -1,9 +1,9 @@
 {% extends "_layout.html" %}
-{% block title %}Saved Picks — PERSIB Simetris{% endblock %}
+{% block title %}Saved Picks — ACL2 Analytics &amp; Simulation{% endblock %}
 {% block content %}
 <main class="content-wrapper">
     <div class="dashboard-intro">
-        <h1 class="jl-page-title">💾 Saved Picks</h1>
+        <h1 class="jl-page-title">Saved Picks</h1>
         <p class="group-label">Simpan, lihat, dan hapus perbandingan skenario pilihan Anda.</p>
     </div>
 
@@ -16,27 +16,44 @@
     {% endwith %}
 
     <form method="post" class="filter-panel" aria-label="Save pick form">
+        <input type="hidden" name="mode" value="duel">
         <label>
-            Title
-            <input type="text" name="title" placeholder="e.g., Best scenario vs Seoul" required maxlength="80">
+            Judul
+            <input type="text" name="title" placeholder="mis. Skenario terbaik vs Seoul" required maxlength="80">
         </label>
         <label>
-            Club
+            Klub
             <select name="club">
                 {% for club in clubs %}
-                <option value="{{ club.slug }}">{{ club.name }}</option>
+                <option value="{{ club.slug }}" {% if club.slug == prefill.club %}selected{% endif %}>{{ club.name }}</option>
                 {% endfor %}
             </select>
         </label>
         <label>
-            Scenario A
-            <input type="text" name="side_a" placeholder="e.g., Win at home" required maxlength="120">
+            Hasil Skenario A
+            <select name="result_a">
+                {% for value in results %}
+                <option value="{{ value }}" {% if value == prefill.result_a %}selected{% endif %}>{{ result_labels[value] }}</option>
+                {% endfor %}
+            </select>
         </label>
         <label>
-            Scenario B
-            <input type="text" name="side_b" placeholder="e.g., Draw away" required maxlength="120">
+            Hasil Skenario B
+            <select name="result_b">
+                {% for value in results %}
+                <option value="{{ value }}" {% if value == prefill.result_b or (not prefill.result_b and value == 'draw') %}selected{% endif %}>{{ result_labels[value] }}</option>
+                {% endfor %}
+            </select>
         </label>
-        <button type="submit" class="btn-primary">Save Pick</button>
+        <label>
+            Label Skenario A
+            <input type="text" name="side_a" placeholder="mis. Menang di kandang" required maxlength="120">
+        </label>
+        <label>
+            Label Skenario B
+            <input type="text" name="side_b" placeholder="mis. Seri di tandang" required maxlength="120">
+        </label>
+        <button type="submit" class="btn-primary">Simpan Pick</button>
     </form>
 
     {% if saved %}
@@ -46,18 +63,29 @@
             <div class="saved-header">
                 <h3>{{ pick.title }}</h3>
                 <form method="post" action="{{ url_for('delete_pick', pick_id=pick.id) }}" class="inline-form">
-                    <button type="submit" class="btn-danger">Delete</button>
+                    <button type="submit" class="btn-danger">Hapus</button>
                 </form>
             </div>
-            <p><strong>Scenario A:</strong> {{ pick.side_a }}</p>
-            <p><strong>Scenario B:</strong> {{ pick.side_b }}</p>
-            <p class="small-note">Created at {{ pick.created_at }}</p>
+            <p><strong>Skenario A:</strong> {{ pick.side_a }}
+                {% if pick.payload.result_a %}<span class="pos-badge">{{ result_labels.get(pick.payload.result_a, pick.payload.result_a) }}</span>{% endif %}
+            </p>
+            <p><strong>Skenario B:</strong> {{ pick.side_b }}
+                {% if pick.payload.result_b %}<span class="pos-badge">{{ result_labels.get(pick.payload.result_b, pick.payload.result_b) }}</span>{% endif %}
+            </p>
+            <p class="small-note">{{ pick.mode_label }} · Disimpan {{ pick.created_label }}</p>
+            {% if pick.payload.club %}
+            <p>
+                <a class="btn-primary" href="{{ url_for('duel', club=pick.payload.club, result_a=pick.payload.result_a, result_b=pick.payload.result_b) }}">
+                    Buka di Duel
+                </a>
+            </p>
+            {% endif %}
         </article>
         {% endfor %}
     </section>
     {% else %}
     <div class="empty-state" role="status">
-        <p>🔍 Belum ada pick tersimpan. Gunakan form di atas untuk menyimpan perbandingan pertama Anda.</p>
+        <p>Belum ada pick tersimpan. Gunakan form di atas untuk menyimpan perbandingan pertama Anda.</p>
     </div>
     {% endif %}
 </main>

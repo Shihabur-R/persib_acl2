@@ -1,5 +1,5 @@
 """
-Unit tests for the PERSIB Simetris metrics module.
+Unit tests for the ACL2 Analytics & Simulation metrics module.
 
 Maps to SRS test cases:
   TC-01  Balance Meter with valid squad data returns score + label.

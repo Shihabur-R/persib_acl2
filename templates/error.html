@@ -1,0 +1,15 @@
+{% extends "_layout.html" %}
+{% block title %}{{ code }} — ACL2 Analytics &amp; Simulation{% endblock %}
+
+{% block content %}
+<main class="content-wrapper">
+    <div class="dashboard-intro">
+        <h1 class="jl-page-title">{{ code }}</h1>
+        <p class="group-label">{{ message }}</p>
+    </div>
+    <div class="empty-state">
+        <p>Kembali ke <a href="{{ url_for('home') }}">dashboard</a> atau coba
+            <a href="{{ url_for('balance') }}">Balance Meter</a>.</p>
+    </div>
+</main>
+{% endblock %}

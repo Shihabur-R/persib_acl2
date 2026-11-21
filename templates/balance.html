@@ -1,9 +1,9 @@
 {% extends "_layout.html" %}
-{% block title %}Balance Meter — PERSIB Simetris{% endblock %}
+{% block title %}Balance Meter — ACL2 Analytics &amp; Simulation{% endblock %}
 {% block content %}
 <main class="content-wrapper">
     <div class="dashboard-intro">
-        <h1 class="jl-page-title">⚖️ Balance Meter</h1>
+        <h1 class="jl-page-title">Balance Meter</h1>
         <p class="group-label">Ukur keseimbangan antar dua sisi: skuad, kandang vs tandang, atau head-to-head klasemen.</p>
     </div>
 
@@ -39,11 +39,15 @@
     <section class="balance-card">
         <div class="balance-score-row">
             <span class="balance-score">{{ result.score }}</span>
-            <span class="balance-label">{{ result.label_en }}</span>
+            <span class="balance-label">{{ result.label_id or result.label_en }}</span>
         </div>
         <div class="balance-bar" role="img" aria-label="Balance score {{ result.score }} out of 100">
             <div class="balance-bar-fill" style="width: {{ result.score }}%"></div>
         </div>
+
+        {% if result.note %}
+        <p class="small-note" role="status">Catatan: {{ result.note }}</p>
+        {% endif %}
 
         {% if mode == 'squad' %}
         <div class="two-column-grid">
@@ -81,7 +85,7 @@
                 <p>Goals Against: {{ result.split.away.goals_against }}</p>
             </div>
         </div>
-        {% else %}
+        {% elif result.team_a and result.team_b %}
         <div class="two-column-grid">
             <div>
                 <h3>{{ result.team_a.name }}</h3>
@@ -94,7 +98,16 @@
                 <p>Goals For: {{ result.team_b.goals_for }}</p>
             </div>
         </div>
+        {% else %}
+        <div class="empty-state">
+            <p>Data klasemen untuk salah satu klub belum tersedia.</p>
+        </div>
         {% endif %}
     </section>
+
+    <p class="small-note">
+        Skor mengukur kemiripan distribusi (0–100), bukan kekuatan tim.
+        Lihat <a href="{{ url_for('insights') }}">Temuan Statistik</a> untuk konteks dataset.
+    </p>
 </main>
 {% endblock %}
