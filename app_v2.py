@@ -24,6 +24,7 @@ from flask import Flask, abort, flash, redirect, render_template, request, url_f
 
 import database
 import data_sources
+import knockout as knockout_stage
 import metrics
 import picks_store
 
@@ -39,6 +40,11 @@ picks_store.init_table()
 BALANCE_MODES = ("squad", "home_away", "head_to_head")
 DUEL_RESULTS = ("win", "draw", "loss")
 RESULT_LABELS = {"win": "Menang", "draw": "Seri", "loss": "Kalah"}
+GOAL_SOURCE_LABELS = {
+    "manual": "input manual",
+    "average": "rata-rata musim",
+    "mixed": "sebagian manual, sebagian turunan",
+}
 
 
 def _clubs_by_slug() -> dict[str, dict]:
@@ -88,7 +94,11 @@ def _base_standing(club: dict) -> dict | None:
 @app.context_processor
 def inject_globals():
     """Expose season/source metadata to every template (legacy footer links)."""
-    return {"season": data_sources.get_season_context(), "source_url": data_sources.SOURCE_URL}
+    return {
+        "season": data_sources.get_season_context(),
+        "source_url": data_sources.SOURCE_URL,
+        "GOAL_SOURCE_LABELS": GOAL_SOURCE_LABELS,
+    }
 
 
 @app.errorhandler(404)
@@ -210,8 +220,15 @@ def duel():
             "played": 0, "won": 0, "drawn": 0, "lost": 0,
             "points": 0, "goals_for": 0, "goals_against": 0,
         }
-        scenario_a = metrics.simulate_scenario(baseline, result_a)
-        scenario_b = metrics.simulate_scenario(baseline, result_b)
+        # Goal inputs are optional; blank values fall back to season averages.
+        goals_a = (values.get("gf_a", ""), values.get("ga_a", ""))
+        goals_b = (values.get("gf_b", ""), values.get("ga_b", ""))
+        scenario_a = metrics.simulate_scenario(
+            baseline, result_a, goals_a[0], goals_a[1], model_goals=True
+        )
+        scenario_b = metrics.simulate_scenario(
+            baseline, result_b, goals_b[0], goals_b[1], model_goals=True
+        )
         scenario_result = {
             "scenario_a": scenario_a,
             "scenario_b": scenario_b,
@@ -221,6 +238,8 @@ def duel():
             "label_a": RESULT_LABELS[result_a],
             "label_b": RESULT_LABELS[result_b],
             "baseline_used": base is not None,
+            "goals_a": goals_a,
+            "goals_b": goals_b,
         }
 
     return render_template(
@@ -234,6 +253,11 @@ def duel():
         results=DUEL_RESULTS,
         result_labels=RESULT_LABELS,
         note=note,
+        goal_baseline=metrics.goal_baseline(base or {}),
+        goal_inputs={
+            "gf_a": values.get("gf_a", ""), "ga_a": values.get("ga_a", ""),
+            "gf_b": values.get("gf_b", ""), "ga_b": values.get("ga_b", ""),
+        },
     )
 
 
@@ -284,6 +308,41 @@ def delete_pick(pick_id: int):
     except picks_store.PickNotFoundError:
         flash("Pick tidak ditemukan atau sudah dihapus.", "error")
     return redirect(url_for("picks"))
+
+
+@app.route("/knockout", methods=["GET", "POST"])
+def knockout():
+    """Simulasi bagan babak gugur pra-drawing (QF/SF/Final)."""
+    clubs = data_sources.get_clubs()
+    clubs_by_slug = {club["slug"]: club for club in clubs}
+    standings_by_group = {
+        group["group"]: group["standings"] for group in data_sources.load_standings()
+    }
+    seeds = knockout_stage.projected_seeds(standings_by_group)
+
+    values = request.form if request.method == "POST" else request.args
+    manual = {
+        seed: values.get(f"slot_{seed}", "").strip()
+        for seed in knockout_stage.DEFAULT_SEEDS
+        if values.get(f"slot_{seed}", "").strip() in clubs_by_slug
+    }
+    winners = {
+        match_id: values.get(f"winner_{match_id}", "").strip()
+        for match_id in ("QF1", "QF2", "QF3", "QF4", "SF1", "SF2", "F1")
+        if values.get(f"winner_{match_id}", "").strip() in ("home", "away")
+    }
+
+    slots = knockout_stage.build_slots(seeds, manual, clubs_by_slug)
+    bracket = knockout_stage.build_bracket(slots, winners)
+    return render_template(
+        "knockout.html",
+        clubs=clubs,
+        slots=slots,
+        bracket=bracket,
+        manual=manual,
+        winners=winners,
+        seeds=knockout_stage.DEFAULT_SEEDS,
+    )
 
 
 @app.route("/insights")

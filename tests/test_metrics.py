@@ -94,3 +94,57 @@ def test_tc05_pick_delete(tmp_path, monkeypatch):
 
     picks_store.delete_pick(pick_id)
     assert not any(p["id"] == pick_id for p in picks_store.list_picks())
+
+
+def test_scenario_goals_manual_and_fallback():
+    """Goal inputs change GF/GA/GD; blank inputs fall back to season averages."""
+    base = {"played": 4, "won": 4, "drawn": 0, "lost": 0, "points": 12,
+            "goals_for": 8, "goals_against": 4}
+    manual = metrics.simulate_scenario(base, "win", 3, 0, model_goals=True)
+    assert manual["goals_for"] == 11
+    assert manual["goals_against"] == 4
+    assert manual["goal_diff"] == 7
+    assert manual["scenario_goals"]["source"] == "manual"
+
+    auto = metrics.simulate_scenario(base, "win", model_goals=True)
+    assert auto["scenario_goals"]["source"] == "average"
+    assert auto["goals_for"] > base["goals_for"]
+
+    # Legacy points-only behaviour is preserved when model_goals is off.
+    legacy = metrics.simulate_scenario(base, "win")
+    assert legacy["goals_for"] == base["goals_for"]
+
+
+def test_scenario_goals_invalid_and_contradictory():
+    """Garbage input falls back; contradictory scorelines are reconciled."""
+    base = {"played": 2, "won": 1, "drawn": 0, "lost": 1, "points": 3,
+            "goals_for": 2, "goals_against": 2}
+    garbage = metrics.simulate_scenario(base, "draw", "abc", "", model_goals=True)
+    assert garbage["scenario_goals"]["source"] == "average"
+    assert garbage["goals_for"] - base["goals_for"] == garbage["goals_against"] - base["goals_against"]
+
+    odd = metrics.simulate_scenario(base, "win", 0, 5, model_goals=True)
+    scored = odd["scenario_goals"]
+    assert scored["for"] > scored["against"]
+
+
+def test_knockout_bracket_propagation():
+    """Winners advance round by round; premature picks are ignored."""
+    import knockout
+
+    clubs = {
+        f"club{i}": {"name": f"Club {i}", "slug": f"club{i}", "group_name": "E"}
+        for i in range(8)
+    }
+    slots = knockout.build_slots({}, {f"{i+1}E": f"club{i}" for i in range(8)}, clubs)
+    empty = knockout.build_bracket(slots)
+    assert empty["champion"] is None
+    # Picking a final winner before the semis are decided must not invent a club.
+    assert knockout.build_bracket(slots, {"F1": "home"})["champion"] is None
+
+    winners = {"QF1": "home", "QF2": "away", "QF3": "home", "QF4": "away",
+               "SF1": "home", "SF2": "away", "F1": "home"}
+    bracket = knockout.build_bracket(slots, winners)
+    assert bracket["complete"] is True
+    assert bracket["champion"] is not None
+    assert [len(r["matches"]) for r in bracket["rounds"]] == [4, 2, 1]

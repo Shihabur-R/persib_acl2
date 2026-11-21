@@ -179,14 +179,109 @@ def head_to_head(
     }
 
 
+def goal_baseline(base_standing: dict[str, Any]) -> dict[str, int]:
+    """
+    Return per-match goal averages from a standing row.
+
+    Used as the automatic fallback when the user leaves the goal inputs blank.
+    With no matches played yet a neutral 1-1 scoreline is assumed.
+    """
+    played = _num(base_standing.get("played"))
+    if played <= 0:
+        return {"goals_for": 1, "goals_against": 1}
+    return {
+        "goals_for": int(round(_num(base_standing.get("goals_for")) / played)),
+        "goals_against": int(round(_num(base_standing.get("goals_against")) / played)),
+    }
+
+
+def resolve_goals(
+    base_standing: dict[str, Any],
+    result: str,
+    goals_for: Any = None,
+    goals_against: Any = None,
+) -> dict[str, Any]:
+    """
+    Resolve scenario goals from user input, falling back to season averages.
+
+    A single supplied value is enough: the other side is derived from the result
+    (win => scored more, draw => level, loss => conceded more). Values are
+    clamped to 0..20 and coerced so malformed input can never break the page.
+    """
+    baseline = goal_baseline(base_standing)
+    gf = _parse_goals(goals_for)
+    ga = _parse_goals(goals_against)
+    source = "manual"
+
+    if gf is None and ga is None:
+        gf, ga = _scoreline_for_result(result, baseline)
+        source = "average"
+    elif gf is None:
+        gf = _infer_opponent(ga, result, invert=True)
+        source = "mixed"
+    elif ga is None:
+        ga = _infer_opponent(gf, result, invert=False)
+        source = "mixed"
+
+    gf, ga = _reconcile_with_result(gf, ga, result)
+    return {"goals_for": gf, "goals_against": ga, "source": source}
+
+
+def _parse_goals(value: Any) -> int | None:
+    """Parse a goal input into 0..20, or None when blank/invalid."""
+    if value is None or str(value).strip() == "":
+        return None
+    try:
+        return int(_clamp(int(float(value)), 0, 20))
+    except (TypeError, ValueError):
+        return None
+
+
+def _scoreline_for_result(result: str, baseline: dict[str, int]) -> tuple[int, int]:
+    """Build a plausible scoreline from averages that respects the result."""
+    gf, ga = baseline["goals_for"], baseline["goals_against"]
+    if result == "win":
+        return max(gf, ga + 1), min(ga, max(gf, ga + 1) - 1)
+    if result == "loss":
+        return min(gf, max(ga, gf + 1) - 1), max(ga, gf + 1)
+    level = int(round((gf + ga) / 2))
+    return level, level
+
+
+def _infer_opponent(known: int, result: str, invert: bool) -> int:
+    """Derive the missing side of a scoreline from the known side and result."""
+    if result == "draw":
+        return known
+    if (result == "win") != invert:
+        return max(known - 1, 0)
+    return known + 1
+
+
+def _reconcile_with_result(gf: int, ga: int, result: str) -> tuple[int, int]:
+    """Nudge a contradictory scoreline so it matches the declared result."""
+    if result == "win" and gf <= ga:
+        return ga + 1, ga
+    if result == "loss" and gf >= ga:
+        return gf, gf + 1
+    if result == "draw" and gf != ga:
+        level = int(round((gf + ga) / 2))
+        return level, level
+    return gf, ga
+
+
 def simulate_scenario(
-    base_standing: dict[str, Any], result: str
+    base_standing: dict[str, Any],
+    result: str,
+    goals_for: Any = None,
+    goals_against: Any = None,
+    model_goals: bool = False,
 ) -> dict[str, Any]:
     """
     Project how one match result (win/draw/loss) changes a club's standing row.
 
-    Goals for/against are not modelled; this is an explicit simplification that
-    the UI communicates to the user.
+    Goals are only modelled when ``model_goals`` is true; user-supplied goals
+    fall back to season averages via :func:`resolve_goals`. Keeping the default
+    off preserves the original points-only behaviour for existing callers.
     """
     projected = dict(base_standing)
     for key in ("played", "won", "drawn", "lost", "points", "goals_for", "goals_against"):
@@ -202,6 +297,21 @@ def simulate_scenario(
         projected["lost"] += 1
     else:
         raise ValueError(f"Unknown result '{result}'; expected win, draw, or loss")
+
+    projected["goal_diff"] = projected["goals_for"] - projected["goals_against"]
+    if model_goals:
+        goals = resolve_goals(base_standing, result, goals_for, goals_against)
+        projected["goals_for"] += goals["goals_for"]
+        projected["goals_against"] += goals["goals_against"]
+        projected["goal_diff"] = projected["goals_for"] - projected["goals_against"]
+        projected["goals_modelled"] = True
+        projected["scenario_goals"] = {
+            "for": goals["goals_for"],
+            "against": goals["goals_against"],
+            "source": goals["source"],
+        }
+    else:
+        projected["goals_modelled"] = False
     return projected
 
 

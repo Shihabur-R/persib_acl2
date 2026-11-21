@@ -32,6 +32,28 @@
                 {% endfor %}
             </select>
         </label>
+        <fieldset class="goal-inputs">
+            <legend>Gol Skenario A (opsional)</legend>
+            <label>Gol dicetak
+                <input type="number" name="gf_a" min="0" max="20" inputmode="numeric"
+                       value="{{ goal_inputs.gf_a }}" placeholder="{{ goal_baseline.goals_for }}">
+            </label>
+            <label>Gol kemasukan
+                <input type="number" name="ga_a" min="0" max="20" inputmode="numeric"
+                       value="{{ goal_inputs.ga_a }}" placeholder="{{ goal_baseline.goals_against }}">
+            </label>
+        </fieldset>
+        <fieldset class="goal-inputs">
+            <legend>Gol Skenario B (opsional)</legend>
+            <label>Gol dicetak
+                <input type="number" name="gf_b" min="0" max="20" inputmode="numeric"
+                       value="{{ goal_inputs.gf_b }}" placeholder="{{ goal_baseline.goals_for }}">
+            </label>
+            <label>Gol kemasukan
+                <input type="number" name="ga_b" min="0" max="20" inputmode="numeric"
+                       value="{{ goal_inputs.ga_b }}" placeholder="{{ goal_baseline.goals_against }}">
+            </label>
+        </fieldset>
         <button type="submit" class="btn-primary">Bandingkan</button>
     </form>
 
@@ -42,6 +64,14 @@
     <p class="small-note" role="status">Catatan: {{ note }}</p>
     {% endif %}
 
+    <p class="small-note">
+        Kolom gol boleh dikosongkan: sistem otomatis memakai rata-rata gol per laga
+        ({{ goal_baseline.goals_for }} dicetak / {{ goal_baseline.goals_against }} kemasukan).
+        Mengisi satu kolom saja akan menurunkan sisi lainnya dari hasil yang dipilih.
+        Skor yang bertentangan dengan hasil (mis. "Menang" tetapi gol lebih sedikit)
+        disesuaikan otomatis.
+    </p>
+
     {% if scenario_result %}
     <section class="duel-grid" aria-label="Scenario comparison">
         <article class="duel-card">
@@ -50,7 +80,16 @@
             <p>Won: {{ scenario_result.scenario_a.won }}</p>
             <p>Drawn: {{ scenario_result.scenario_a.drawn }}</p>
             <p>Lost: {{ scenario_result.scenario_a.lost }}</p>
-            <p class="duel-points">Points: {{ scenario_result.scenario_a.points }}</p>
+            <p>Gol dicetak: {{ scenario_result.scenario_a.goals_for }}</p>
+            <p>Gol kemasukan: {{ scenario_result.scenario_a.goals_against }}</p>
+            <p>Selisih gol: {{ scenario_result.scenario_a.goal_diff }}</p>
+            {% if scenario_result.scenario_a.scenario_goals %}
+            <p class="small-note">
+                Skenario ini: {{ scenario_result.scenario_a.scenario_goals['for'] }}–{{ scenario_result.scenario_a.scenario_goals['against'] }}
+                ({{ GOAL_SOURCE_LABELS.get(scenario_result.scenario_a.scenario_goals.source, 'manual') }})
+            </p>
+            {% endif %}
+            <p class="duel-points">Poin: {{ scenario_result.scenario_a.points }}</p>
         </article>
         <article class="duel-card">
             <h3>Scenario B ({{ scenario_result.result_b }})</h3>
@@ -58,7 +97,16 @@
             <p>Won: {{ scenario_result.scenario_b.won }}</p>
             <p>Drawn: {{ scenario_result.scenario_b.drawn }}</p>
             <p>Lost: {{ scenario_result.scenario_b.lost }}</p>
-            <p class="duel-points">Points: {{ scenario_result.scenario_b.points }}</p>
+            <p>Gol dicetak: {{ scenario_result.scenario_b.goals_for }}</p>
+            <p>Gol kemasukan: {{ scenario_result.scenario_b.goals_against }}</p>
+            <p>Selisih gol: {{ scenario_result.scenario_b.goal_diff }}</p>
+            {% if scenario_result.scenario_b.scenario_goals %}
+            <p class="small-note">
+                Skenario ini: {{ scenario_result.scenario_b.scenario_goals['for'] }}–{{ scenario_result.scenario_b.scenario_goals['against'] }}
+                ({{ GOAL_SOURCE_LABELS.get(scenario_result.scenario_b.scenario_goals.source, 'manual') }})
+            </p>
+            {% endif %}
+            <p class="duel-points">Poin: {{ scenario_result.scenario_b.points }}</p>
         </article>
     </section>
 
@@ -71,9 +119,10 @@
             — {{ scenario_result.verdict.balance_label_id }}</p>
         <p>Kedekatan poin/laga kedua skenario: <strong>{{ scenario_result.verdict.gap_score }}</strong></p>
         <p class="small-note">
-            Gol tidak dimodelkan dalam proyeksi ini; hanya poin dan rasio hasil laga
-            yang dibandingkan. Skor kesimetrisan mengukur seberapa merata sebaran
-            menang/seri/kalah (100 = merata sempurna), bukan kekuatan tim.
+            Proyeksi kini mencakup gol dan selisih gol dari input Anda atau rata-rata
+            musim. Skor kesimetrisan mengukur seberapa merata sebaran menang/seri/kalah
+            (100 = merata sempurna), bukan kekuatan tim. Keuntungan tetap dihitung dari
+            poin, dengan gol sebagai pembanding sekunder.
         </p>
         <p>
             <a class="btn-primary" href="{{ url_for('picks', club=selected_club.slug, result_a=scenario_result.result_a, result_b=scenario_result.result_b) }}">

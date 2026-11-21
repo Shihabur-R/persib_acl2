@@ -105,9 +105,24 @@
         {% endif %}
     </section>
 
-    <p class="small-note">
-        Skor mengukur kemiripan distribusi (0–100), bukan kekuatan tim.
-        Lihat <a href="{{ url_for('insights') }}">Temuan Statistik</a> untuk konteks dataset.
-    </p>
+    <section class="transparency-note" role="note">
+        <h2 class="section-title">CARA MEMBACA SKOR INI</h2>
+        <ul class="limitation-list">
+            <li><strong>Kemiripan distribusi, bukan kekuatan aktual.</strong> Skor 0–100
+                mengukur seberapa mirip sebaran kedua sisi. Dua tim dengan skor 100
+                belum tentu sama kuat — kualitas pemain, anggaran, dan performa tidak diukur.</li>
+            <li><strong>Skor netral 50</strong> dipakai bila salah satu sisi belum punya data,
+                bukan berarti kedua sisi benar-benar seimbang.</li>
+            <li><strong>Mode skuad</strong> hanya membandingkan jumlah pemain per lini
+                (GK/DF/MF/FW), bukan kemampuan individu.</li>
+            <li><strong>Mode kandang/tandang &amp; head-to-head</strong> bergantung pada laga
+                yang sudah selesai; awal musim datanya masih sedikit sehingga skor mudah berubah.</li>
+            <li>Perhatikan indikator sumber data di header: saat memakai
+                <strong>snapshot lokal</strong>, angka bisa tertinggal dari pertandingan terakhir.</li>
+        </ul>
+        <p class="small-note">
+            Konteks dataset lengkap ada di <a href="{{ url_for('insights') }}">Temuan Statistik</a>.
+        </p>
+    </section>
 </main>
 {% endblock %}

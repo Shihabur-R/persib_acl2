@@ -17,6 +17,18 @@
                 <div class="title-text">
                     <span class="tournament-tag">AFC CHAMPIONS LEAGUE TWO · EAST ZONE</span>
                     <h1>ACL2 <span>ANALYTICS &amp; SIMULATION</span></h1>
+                    {% set statuses = season.data_status.values()|list if season and season.data_status else [] %}
+                    {% if not statuses or 'empty' in statuses %}
+                        {% set source_kind, source_text = 'empty', 'Data tidak tersedia' %}
+                    {% elif 'snapshot' in statuses %}
+                        {% set source_kind, source_text = 'snapshot', 'Snapshot lokal' %}
+                    {% else %}
+                        {% set source_kind, source_text = 'live', 'API AFC (live)' %}
+                    {% endif %}
+                    <p class="source-indicator source-indicator-{{ source_kind }}"
+                       title="Asal data fixtures &amp; klasemen yang sedang dipakai">
+                        Sumber data: {{ source_text }}
+                    </p>
                 </div>
             </div>
             <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="primary-nav" aria-label="Buka menu navigasi">
@@ -30,6 +42,7 @@
                     ('balance', 'Balance Meter', 'Ukur keseimbangan dua sisi'),
                     ('duel', 'Scenario Duel', 'Bandingkan dua proyeksi hasil'),
                     ('picks', 'Saved Picks', 'Perbandingan tersimpan'),
+                    ('knockout', 'Knockout Stage', 'Simulasi bagan gugur pra-drawing'),
                     ('insights', 'Insights', 'Temuan statistik & keterbatasan'),
                     ('fixtures', 'Fixtures', 'Jadwal & hasil pertandingan'),
                     ('clubs', 'Klub & Skuad', 'Profil 16 klub peserta'),
