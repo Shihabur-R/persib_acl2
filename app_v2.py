@@ -40,10 +40,13 @@ picks_store.init_table()
 BALANCE_MODES = ("squad", "home_away", "head_to_head")
 DUEL_RESULTS = ("win", "draw", "loss")
 RESULT_LABELS = {"win": "Menang", "draw": "Seri", "loss": "Kalah"}
+VENUES = ("home", "away")
+VENUE_LABELS = {"home": "Kandang", "away": "Tandang"}
 GOAL_SOURCE_LABELS = {
     "manual": "input manual",
     "average": "rata-rata musim",
     "mixed": "sebagian manual, sebagian turunan",
+    "contextual": "konteks kandang/tandang, form & head-to-head",
 }
 
 
@@ -113,19 +116,45 @@ def unavailable(error):
     return render_template("error.html", code=503, message=getattr(error, "description", "Data sementara tidak tersedia.")), 503
 
 
+def _select_group(
+    groups: list[dict], requested: str | None, allow_all: bool = False
+) -> tuple[list[str], str, list[dict]]:
+    """
+    Resolve the group filter shared by Home and Fixtures.
+
+    Returns (available letters, active letter, groups to render). A single group is
+    rendered by default so the page stays short. ``allow_all`` (Fixtures only) lets
+    ?group=all render every group at once.
+    """
+    letters = [group["name"] for group in groups]
+    if not letters:
+        return [], "", []
+    active = (requested or "").strip().upper()
+    if allow_all and active == "ALL":
+        return letters, "ALL", groups
+    if active not in letters:
+        active = letters[0]
+    selected = [group for group in groups if group["name"] == active]
+    return letters, active, selected
+
+
 @app.route("/")
 def home():
-    """Landing dashboard with compact stats and quick navigation."""
+    """Landing dashboard showing one group at a time."""
     clubs = data_sources.get_clubs()
     db_stats = data_sources.get_database_stats()
     season = data_sources.get_season_context()
-    groups = data_sources.load_dashboard_groups()
+    letters, active, selected = _select_group(
+        data_sources.load_dashboard_groups(), request.args.get("group")
+    )
     return render_template(
         "index.html",
         clubs=clubs,
         db_stats=db_stats,
         season=season,
-        groups=groups,
+        groups=selected,
+        group_letters=letters,
+        active_group=active,
     )
 
 
@@ -209,6 +238,28 @@ def duel():
     if result_b not in DUEL_RESULTS:
         result_b = "draw"
 
+    # Match context: venue and opponent let the projection use home/away form
+    # and head-to-head evidence instead of a plain season average.
+    venue = values.get("venue", "home")
+    if venue not in VENUES:
+        venue = "home"
+    opponents = [
+        club for club in clubs
+        if club["slug"] != selected_club["slug"]
+        and club.get("group_name") == selected_club.get("group_name")
+    ]
+    opponent_slug = values.get("opponent", "")
+    if opponent_slug not in {club["slug"] for club in opponents}:
+        opponent_slug = opponents[0]["slug"] if opponents else ""
+
+    context = metrics.contextual_goal_baseline(
+        base or {},
+        fixtures=_group_fixtures(selected_club.get("group_name", "")),
+        club_slug=selected_club["slug"],
+        venue=venue,
+        opponent=opponent_slug,
+    )
+
     scenario_result = None
     note = None
     if base is None:
@@ -220,14 +271,14 @@ def duel():
             "played": 0, "won": 0, "drawn": 0, "lost": 0,
             "points": 0, "goals_for": 0, "goals_against": 0,
         }
-        # Goal inputs are optional; blank values fall back to season averages.
+        # Goal inputs are optional; blank values use the contextual baseline.
         goals_a = (values.get("gf_a", ""), values.get("ga_a", ""))
         goals_b = (values.get("gf_b", ""), values.get("ga_b", ""))
         scenario_a = metrics.simulate_scenario(
-            baseline, result_a, goals_a[0], goals_a[1], model_goals=True
+            baseline, result_a, goals_a[0], goals_a[1], model_goals=True, baseline=context
         )
         scenario_b = metrics.simulate_scenario(
-            baseline, result_b, goals_b[0], goals_b[1], model_goals=True
+            baseline, result_b, goals_b[0], goals_b[1], model_goals=True, baseline=context
         )
         scenario_result = {
             "scenario_a": scenario_a,
@@ -253,11 +304,16 @@ def duel():
         results=DUEL_RESULTS,
         result_labels=RESULT_LABELS,
         note=note,
-        goal_baseline=metrics.goal_baseline(base or {}),
+        goal_baseline=context,
         goal_inputs={
             "gf_a": values.get("gf_a", ""), "ga_a": values.get("ga_a", ""),
             "gf_b": values.get("gf_b", ""), "ga_b": values.get("ga_b", ""),
         },
+        venues=VENUES,
+        venue_labels=VENUE_LABELS,
+        selected_venue=venue,
+        opponents=opponents,
+        selected_opponent=opponent_slug,
     )
 
 
@@ -310,38 +366,35 @@ def delete_pick(pick_id: int):
     return redirect(url_for("picks"))
 
 
-@app.route("/knockout", methods=["GET", "POST"])
+@app.route("/knockout", methods=["GET"])
 def knockout():
-    """Simulasi bagan babak gugur pra-drawing (QF/SF/Final)."""
-    clubs = data_sources.get_clubs()
-    clubs_by_slug = {club["slug"]: club for club in clubs}
+    """
+    Bagan babak gugur yang mengikuti status penyelesaian grup & hasil undian.
+
+    Read-only: tidak ada input manual klub maupun pemenang. Slot hanya terisi
+    bila grup terkait selesai dan undian menempatkan seed tersebut; sisanya TBD.
+    Jumlah slot/babak menyesuaikan banyaknya kontestan lintas grup.
+    """
     standings_by_group = {
         group["group"]: group["standings"] for group in data_sources.load_standings()
     }
-    seeds = knockout_stage.projected_seeds(standings_by_group)
-
-    values = request.form if request.method == "POST" else request.args
-    manual = {
-        seed: values.get(f"slot_{seed}", "").strip()
-        for seed in knockout_stage.DEFAULT_SEEDS
-        if values.get(f"slot_{seed}", "").strip() in clubs_by_slug
+    fixtures_by_group = {
+        group["group"]: group["fixtures"] for group in data_sources.load_fixtures()
     }
-    winners = {
-        match_id: values.get(f"winner_{match_id}", "").strip()
-        for match_id in ("QF1", "QF2", "QF3", "QF4", "SF1", "SF2", "F1")
-        if values.get(f"winner_{match_id}", "").strip() in ("home", "away")
-    }
-
-    slots = knockout_stage.build_slots(seeds, manual, clubs_by_slug)
-    bracket = knockout_stage.build_bracket(slots, winners)
+    draw = data_sources.load_knockout_draw()
+    results = data_sources.load_knockout_results()
+    stage = knockout_stage.build_stage(
+        standings_by_group,
+        fixtures_by_group,
+        draw=draw,
+        results=results,
+    )
     return render_template(
         "knockout.html",
-        clubs=clubs,
-        slots=slots,
-        bracket=bracket,
-        manual=manual,
-        winners=winners,
-        seeds=knockout_stage.DEFAULT_SEEDS,
+        stage=stage,
+        slots=stage["slots"],
+        bracket=stage["bracket"],
+        completion=stage["completion"],
     )
 
 
@@ -350,16 +403,21 @@ def insights():
     """Temuan statistik: distribusi posisi per klub & perbandingan Grup E."""
     clubs = data_sources.get_clubs()
     composition = metrics.composition_by_club(clubs, data_sources.get_players())
-    group_letter = request.args.get("group", "E").strip().upper()
-    if group_letter not in data_sources.GROUP_NAMES:
-        group_letter = "E"
+    # Dropdown lists groups that actually have standings (A–H are all accepted).
+    available = [
+        group["group"] for group in data_sources.load_standings()
+        if group["group"] in data_sources.SUPPORTED_GROUPS
+    ] or list(data_sources.GROUP_NAMES)
+    group_letter = request.args.get("group", available[0]).strip().upper()
+    if group_letter not in data_sources.SUPPORTED_GROUPS:
+        group_letter = available[0]
     comparison = metrics.group_comparison_table(_group_standings(group_letter))
     return render_template(
         "insights.html",
         composition=composition,
         comparison=comparison,
         group_letter=group_letter,
-        groups=data_sources.GROUP_NAMES,
+        groups=available,
         positions=metrics.POSITIONS,
         db_stats=data_sources.get_database_stats(),
     )
@@ -393,17 +451,63 @@ def club_detail(slug):
 
 @app.route("/fixtures")
 def fixtures():
-    """Compatibility route: render fixtures from the new data source."""
-    groups = data_sources.load_fixtures()
-    return render_template("fixtures.html", groups=groups)
+    """
+    Fixtures for one group, or a merged chronological list when 'All' is chosen.
+
+    The status filter (all/played/upcoming) applies to both modes.
+    """
+    letters, active, selected = _select_group(
+        data_sources.load_fixtures(), request.args.get("group"), allow_all=True
+    )
+    status = (request.args.get("status") or "all").strip().lower()
+    if status not in metrics.FIXTURE_FILTERS:
+        status = "all"
+
+    merged = active == "ALL"
+    if merged:
+        matches = metrics.filter_fixtures(metrics.merge_fixtures(selected), status)
+        groups_view = []
+    else:
+        matches = []
+        groups_view = [
+            dict(group, fixtures=metrics.filter_fixtures(group.get("fixtures") or [], status))
+            for group in selected
+        ]
+    return render_template(
+        "fixtures.html",
+        groups=groups_view,
+        matches=matches,
+        merged=merged,
+        group_letters=letters,
+        active_group=active,
+        status_filter=status,
+        status_filters=metrics.FIXTURE_FILTERS,
+        status_labels=metrics.FIXTURE_FILTER_LABELS,
+        total_matches=len(matches) + sum(len(g["fixtures"]) for g in groups_view),
+    )
 
 
 @app.route("/clubs")
 def clubs():
-    """Compatibility route: render clubs from the new data source."""
+    """Club directory for one group, or every populated group when 'All'."""
     grouped_clubs = database.get_clubs_grouped()
+    letters = list(grouped_clubs)
+    requested = (request.args.get("group") or "all").strip().upper()
+    if requested != "ALL" and requested not in letters:
+        requested = "ALL"
+    visible = (
+        grouped_clubs
+        if requested == "ALL"
+        else {letter: grouped_clubs[letter] for letter in letters if letter == requested}
+    )
     db_stats = data_sources.get_database_stats()
-    return render_template("clubs.html", grouped_clubs=grouped_clubs, db_stats=db_stats)
+    return render_template(
+        "clubs.html",
+        grouped_clubs=visible,
+        group_letters=letters,
+        active_group=requested,
+        db_stats=db_stats,
+    )
 
 
 @app.route("/players")
@@ -415,15 +519,23 @@ def players():
     club_filter = request.args.get("club", type=int)
     player_list = database.search_players(
         query=q if q else None,
-        group_name=group_filter if group_filter in ("E", "F", "G", "H") else None,
+        group_name=group_filter if group_filter in database.SUPPORTED_GROUPS else None,
         position=pos_filter if pos_filter in ("GK", "DF", "MF", "FW") else None,
         club_id=club_filter,
     )
     all_clubs = database.get_all_clubs()
+    letters = sorted(
+        {
+            (club.get("group_name") or "").strip().upper()
+            for club in all_clubs
+        }
+        & set(database.SUPPORTED_GROUPS)
+    )
     return render_template(
         "players.html",
         players=player_list,
         all_clubs=all_clubs,
+        group_letters=letters,
         current_q=q,
         current_group=group_filter,
         current_pos=pos_filter,

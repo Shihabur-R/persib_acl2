@@ -91,6 +91,9 @@
                 </div>
             </div>
 
+            {% if not players %}
+            <p class="small-note">Data skuad klub ini belum tersedia pada sumber resmi.</p>
+            {% else %}
             <div class="table-responsive">
                 <table class="j-table squad-roster-table" id="squad-table">
                     <thead>
@@ -137,6 +140,7 @@
                     </tbody>
                 </table>
             </div>
+            {% endif %}
         </section>
 
         <!-- SIBLING CLUBS IN GROUP -->

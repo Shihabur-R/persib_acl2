@@ -2,8 +2,15 @@
 {% block title %}Fixtures &amp; Results — ACL2 Analytics &amp; Simulation{% endblock %}
 {% block content %}
     <main class="content-wrapper jl-fixtures-wrapper">
-        <h1 class="jl-page-title">Fixtures & Results</h1>
-        <p class="group-label">AFC Champions League Two 2026/27 · Groups E–H</p>
+        <h1 class="jl-page-title">
+            {% if active_group and active_group != 'ALL' %}Group {{ active_group }} Fixtures &amp; Results
+            {% elif active_group == 'ALL' %}All Groups Fixtures &amp; Results
+            {% else %}Fixtures &amp; Results{% endif %}
+        </h1>
+        <p class="group-label">
+            AFC Champions League Two 2026/27
+            {% if group_letters %}· Grup {{ group_letters|join(', ') }}{% endif %}
+        </p>
         <div class="timezone-notice">
             <span class="timezone-pill">
                 <span class="timezone-dot" aria-hidden="true"></span>
@@ -11,66 +18,53 @@
             </span>
         </div>
 
-        <nav class="group-switcher" aria-label="Pilih grup">
-            {% for group in groups %}
-            <a href="#fixtures-{{ group.name }}">Group {{ group.name }}</a>
+        <nav class="group-switcher" aria-label="Group filter">
+            <a href="{{ url_for('fixtures', group='all', status=status_filter) }}"
+               {% if active_group == 'ALL' %}class="is-active" aria-current="true"{% endif %}>All</a>
+            {% for letter in group_letters %}
+            <a href="{{ url_for('fixtures', group=letter, status=status_filter) }}"
+               {% if letter == active_group %}class="is-active" aria-current="true"{% endif %}>Group {{ letter }}</a>
             {% endfor %}
         </nav>
 
+        <nav class="group-switcher status-switcher" aria-label="Status filter">
+            {% for value in status_filters %}
+            <a href="{{ url_for('fixtures', group=active_group or 'all', status=value) }}"
+               {% if value == status_filter %}class="is-active" aria-current="true"{% endif %}>{{ status_labels[value] }}</a>
+            {% endfor %}
+        </nav>
+
+        <p class="small-note">
+            {{ total_matches }} matches · {{ status_labels[status_filter] }}
+            {% if merged %}· all groups, sorted by kickoff{% endif %}
+        </p>
+
+        {% if merged %}
+        <section class="fixture-group">
+            <h2 class="group-heading">ALL GROUPS</h2>
+            <div class="jl-matchlist-container">
+                {% for match in matches %}
+                {% with show_group = true %}{% include "_fixture_row.html" %}{% endwith %}
+                {% else %}
+                <p class="small-note">No matches for this filter.</p>
+                {% endfor %}
+            </div>
+        </section>
+        {% else %}
         {% for group in groups %}
         <section class="fixture-group" id="fixtures-{{ group.name }}">
             <h2 class="group-heading">GROUP {{ group.name }}</h2>
             <div class="jl-matchlist-container">
                 {% for match in group.fixtures %}
-                <article class="jl-match-row">
-                    <div class="jl-col-time">
-                        <span class="jl-time-text" {% if match.iso_utc %}data-utc-date="{{ match.iso_utc }}"{% endif %}>{{ match.tanggal }}</span>
-                        <span class="jl-ko-text">{{ match.matchweek }}</span>
-                        {% if match.waktu %}<span class="jl-ko-text" {% if match.iso_utc %}data-utc-time="{{ match.iso_utc }}"{% endif %}>{{ match.waktu }}</span>{% endif %}
-                    </div>
-                    <div class="jl-col-fixture-matrix">
-                        <div class="jl-team-block jl-team-home">
-                            {% if match.home_slug %}
-                            <a href="{{ url_for('club_detail', slug=match.home_slug) }}" class="jl-team-name-text club-link" title="Lihat Skuad {{ match.home }}">{{ match.home }}</a>
-                            {% else %}
-                            <span class="jl-team-name-text">{{ match.home }}</span>
-                            {% endif %}
-                            {% if match.home_logo %}
-                            <img src="{{ match.home_logo }}" alt="" class="jl-mini-crest">
-                            {% else %}
-                            <span class="club-badge">{{ match.home_badge }}</span>
-                            {% endif %}
-                        </div>
-                        <div class="jl-score-status-block">
-                            {% if match.status == 'FT' %}
-                            <div class="jl-score-box-numbers">
-                                {{ match.skor_home }}<span class="jl-num-divider">-</span>{{ match.skor_away }}
-                            </div>
-                            <span class="jl-badge-status-flat jl-ft-color">Full Time</span>
-                            {% else %}
-                            <div class="jl-vs-box-text">VS</div>
-                            <span class="jl-badge-status-flat jl-scheduled-color">Jadwal</span>
-                            {% endif %}
-                        </div>
-                        <div class="jl-team-block jl-team-away">
-                            {% if match.away_logo %}
-                            <img src="{{ match.away_logo }}" alt="" class="jl-mini-crest">
-                            {% else %}
-                            <span class="club-badge">{{ match.away_badge }}</span>
-                            {% endif %}
-                            {% if match.away_slug %}
-                            <a href="{{ url_for('club_detail', slug=match.away_slug) }}" class="jl-team-name-text club-link" title="Lihat Skuad {{ match.away }}">{{ match.away }}</a>
-                            {% else %}
-                            <span class="jl-team-name-text">{{ match.away }}</span>
-                            {% endif %}
-                        </div>
-                    </div>
-                </article>
+                {% with show_group = false %}{% include "_fixture_row.html" %}{% endwith %}
+                {% else %}
+                <p class="small-note">No matches for this filter.</p>
                 {% endfor %}
             </div>
         </section>
         {% endfor %}
-    
+        {% endif %}
+    </main>
 {% endblock %}
 
 {% block scripts %}

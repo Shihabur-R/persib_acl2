@@ -195,11 +195,176 @@ def goal_baseline(base_standing: dict[str, Any]) -> dict[str, int]:
     }
 
 
+# Shrinkage prior: a small sample is pulled toward the season average so two
+# lucky matches cannot dominate the projection.
+FORM_PRIOR_MATCHES = 3.0
+CONTEXT_WEIGHTS = {"venue": 0.5, "form": 0.3, "h2h": 0.2}
+CONTEXT_LABELS = {
+    "venue": "kandang/tandang",
+    "form": "form terkini",
+    "h2h": "head-to-head",
+    "season": "rata-rata musim",
+}
+
+
+def _iter_club_matches(
+    fixtures: list[dict[str, Any]], club_slug: str
+) -> list[dict[str, Any]]:
+    """
+    Yield finished matches of one club with goals oriented to that club.
+
+    Sorted newest first when a date is available so 'recent form' is meaningful.
+    """
+    rows: list[dict[str, Any]] = []
+    for match in fixtures or []:
+        if (match.get("status") or "").upper() != "FT":
+            continue
+        is_home = _same_team(
+            {"slug": match.get("home_slug"), "name": match.get("home")}, club_slug
+        )
+        is_away = _same_team(
+            {"slug": match.get("away_slug"), "name": match.get("away")}, club_slug
+        )
+        if not (is_home or is_away):
+            continue
+        gf = _num(match.get("home_goals" if is_home else "away_goals"))
+        ga = _num(match.get("away_goals" if is_home else "home_goals"))
+        rows.append(
+            {
+                "venue": "home" if is_home else "away",
+                "opponent": (match.get("away_slug") or match.get("away"))
+                if is_home
+                else (match.get("home_slug") or match.get("home")),
+                "goals_for": int(gf),
+                "goals_against": int(ga),
+                "points": 3 if gf > ga else 1 if gf == ga else 0,
+                "date": match.get("iso_utc") or match.get("date_venue") or "",
+            }
+        )
+    rows.sort(key=lambda row: str(row["date"]), reverse=True)
+    return rows
+
+
+def _aggregate(matches: list[dict[str, Any]]) -> dict[str, Any]:
+    """Aggregate oriented matches into counts and per-game goal rates."""
+    played = len(matches)
+    gf = sum(row["goals_for"] for row in matches)
+    ga = sum(row["goals_against"] for row in matches)
+    return {
+        "played": played,
+        "goals_for": gf,
+        "goals_against": ga,
+        "points": sum(row["points"] for row in matches),
+        "rate_for": gf / played if played else 0.0,
+        "rate_against": ga / played if played else 0.0,
+    }
+
+
+def club_form(
+    fixtures: list[dict[str, Any]], club_slug: str, limit: int = 5
+) -> dict[str, Any]:
+    """Recent-form aggregate (last ``limit`` finished matches, newest first)."""
+    matches = _iter_club_matches(fixtures, club_slug)[: max(limit, 1)]
+    return dict(_aggregate(matches), matches=matches)
+
+
+def venue_record(
+    fixtures: list[dict[str, Any]], club_slug: str, venue: str | None
+) -> dict[str, Any]:
+    """Aggregate restricted to home or away matches; all matches when venue is None."""
+    matches = _iter_club_matches(fixtures, club_slug)
+    if venue in ("home", "away"):
+        matches = [row for row in matches if row["venue"] == venue]
+    return _aggregate(matches)
+
+
+def head_to_head_record(
+    fixtures: list[dict[str, Any]], club_slug: str, opponent: str | None
+) -> dict[str, Any]:
+    """Aggregate of finished matches against one specific opponent."""
+    if not opponent:
+        return _aggregate([])
+    matches = [
+        row
+        for row in _iter_club_matches(fixtures, club_slug)
+        if _same_team({"slug": row["opponent"], "name": row["opponent"]}, opponent)
+    ]
+    return _aggregate(matches)
+
+
+def goal_rates(base_standing: dict[str, Any]) -> dict[str, float]:
+    """Per-game scoring rates from a standing row (1.0/1.0 with no matches yet)."""
+    played = _num(base_standing.get("played"))
+    if played <= 0:
+        return {"rate_for": 1.0, "rate_against": 1.0}
+    return {
+        "rate_for": _num(base_standing.get("goals_for")) / played,
+        "rate_against": _num(base_standing.get("goals_against")) / played,
+    }
+
+
+def contextual_goal_baseline(
+    base_standing: dict[str, Any],
+    fixtures: list[dict[str, Any]] | None = None,
+    club_slug: str | None = None,
+    venue: str | None = None,
+    opponent: str | None = None,
+    recent: int = 5,
+) -> dict[str, Any]:
+    """
+    Blend season averages with venue, recent form and head-to-head evidence.
+
+    Each component is shrunk toward the season rate by n/(n+prior), so a tiny
+    sample barely moves the projection and missing data degrades to the plain
+    season average. Returns integer goals plus the samples behind them.
+    """
+    season = goal_rates(base_standing)
+    samples = {
+        "venue": venue_record(fixtures or [], club_slug or "", venue),
+        "form": club_form(fixtures or [], club_slug or "", recent),
+        "h2h": head_to_head_record(fixtures or [], club_slug or "", opponent),
+    }
+    rates = {"rate_for": season["rate_for"], "rate_against": season["rate_against"]}
+    used: list[str] = []
+    total_weight = 0.0
+    for key, weight in CONTEXT_WEIGHTS.items():
+        sample = samples[key]
+        played = sample["played"]
+        if not played:
+            continue
+        trust = played / (played + FORM_PRIOR_MATCHES)
+        effective = weight * trust
+        total_weight += effective
+        for rate_key in ("rate_for", "rate_against"):
+            rates[rate_key] += effective * (sample[rate_key] - season[rate_key])
+        used.append(key)
+
+    # Normalize so the blended rates stay on the same scale as the season rates.
+    if total_weight > 1.0:
+        for rate_key in ("rate_for", "rate_against"):
+            rates[rate_key] = season[rate_key] + (rates[rate_key] - season[rate_key]) / total_weight
+
+    return {
+        "goals_for": int(round(_clamp(rates["rate_for"], 0.0, 6.0))),
+        "goals_against": int(round(_clamp(rates["rate_against"], 0.0, 6.0))),
+        "rate_for": round(rates["rate_for"], 2),
+        "rate_against": round(rates["rate_against"], 2),
+        "source": "contextual" if used else "average",
+        "components": used,
+        "component_labels": [CONTEXT_LABELS[key] for key in used],
+        "samples": {key: value["played"] for key, value in samples.items()},
+        "venue": venue if venue in ("home", "away") else None,
+        "opponent": opponent or None,
+        "season": season,
+    }
+
+
 def resolve_goals(
     base_standing: dict[str, Any],
     result: str,
     goals_for: Any = None,
     goals_against: Any = None,
+    baseline: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """
     Resolve scenario goals from user input, falling back to season averages.
@@ -208,14 +373,14 @@ def resolve_goals(
     (win => scored more, draw => level, loss => conceded more). Values are
     clamped to 0..20 and coerced so malformed input can never break the page.
     """
-    baseline = goal_baseline(base_standing)
+    context = baseline if baseline else goal_baseline(base_standing)
     gf = _parse_goals(goals_for)
     ga = _parse_goals(goals_against)
     source = "manual"
 
     if gf is None and ga is None:
-        gf, ga = _scoreline_for_result(result, baseline)
-        source = "average"
+        gf, ga = _scoreline_for_result(result, context)
+        source = context.get("source", "average")
     elif gf is None:
         gf = _infer_opponent(ga, result, invert=True)
         source = "mixed"
@@ -275,6 +440,7 @@ def simulate_scenario(
     goals_for: Any = None,
     goals_against: Any = None,
     model_goals: bool = False,
+    baseline: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """
     Project how one match result (win/draw/loss) changes a club's standing row.
@@ -300,7 +466,7 @@ def simulate_scenario(
 
     projected["goal_diff"] = projected["goals_for"] - projected["goals_against"]
     if model_goals:
-        goals = resolve_goals(base_standing, result, goals_for, goals_against)
+        goals = resolve_goals(base_standing, result, goals_for, goals_against, baseline)
         projected["goals_for"] += goals["goals_for"]
         projected["goals_against"] += goals["goals_against"]
         projected["goal_diff"] = projected["goals_for"] - projected["goals_against"]
@@ -310,6 +476,10 @@ def simulate_scenario(
             "against": goals["goals_against"],
             "source": goals["source"],
         }
+        if baseline:
+            projected["scenario_goals"]["components"] = baseline.get("components", [])
+            projected["scenario_goals"]["component_labels"] = baseline.get("component_labels", [])
+            projected["scenario_goals"]["samples"] = baseline.get("samples", {})
     else:
         projected["goals_modelled"] = False
     return projected
@@ -368,6 +538,92 @@ def scenario_symmetry(scenario: dict[str, Any]) -> float:
     distance = sum(abs(value / total - 1.0 / 3.0) for value in outcomes)
     # Maximum possible TV distance for 3 categories against uniform is 4/3.
     return round(_clamp((1.0 - distance / (4.0 / 3.0)) * 100.0), 1)
+
+
+# --- Fixture listing helpers ------------------------------------------------
+
+FIXTURE_FILTERS = ("all", "played", "upcoming")
+FIXTURE_FILTER_LABELS = {
+    "all": "All",
+    "played": "Played",
+    "upcoming": "Upcoming",
+}
+
+
+def is_played(match: dict[str, Any]) -> bool:
+    """A fixture counts as played only when the feed marks it finished."""
+    return (match.get("status") or "").strip().upper() == "FT"
+
+
+def fixture_sort_key(match: dict[str, Any]) -> tuple:
+    """
+    Chronological key with a safe fallback for missing/unparseable timestamps.
+
+    Undated fixtures sort last (flag 1) instead of jumping to the top, and the
+    group plus team names keep the order stable for identical kickoffs.
+    """
+    stamp = _kickoff_stamp(match)
+    return (
+        0 if stamp else 1,
+        stamp or "",
+        str(match.get("group") or ""),
+        str(match.get("home") or ""),
+        str(match.get("away") or ""),
+    )
+
+
+def _kickoff_stamp(match: dict[str, Any]) -> str:
+    """Normalize a kickoff into a comparable ISO-like string, or '' when unknown."""
+    iso = str(match.get("iso_utc") or "").strip()
+    if iso:
+        parsed = _parse_stamp(iso)
+        if parsed:
+            return parsed
+    date = str(match.get("date_venue") or "").strip()
+    if not date:
+        return ""
+    time_part = str(match.get("time_venue") or "").strip()[:8]
+    return _parse_stamp(f"{date} {time_part}".strip()) or ""
+
+
+def _parse_stamp(value: str) -> str:
+    """Parse common AFC timestamp shapes into 'YYYY-MM-DD HH:MM:SS', or ''."""
+    from datetime import datetime
+
+    text = value.replace("Z", "").replace("T", " ").strip()
+    for fmt in ("%Y-%m-%d %H:%M:%S", "%Y-%m-%d %H:%M", "%Y-%m-%d", "%d/%m/%Y %H:%M", "%d/%m/%Y"):
+        try:
+            return datetime.strptime(text[:19], fmt).strftime("%Y-%m-%d %H:%M:%S")
+        except ValueError:
+            continue
+    return ""
+
+
+def merge_fixtures(groups: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """
+    Flatten per-group fixtures into one chronological list.
+
+    Each row keeps its group letter so the combined view can still show where a
+    match belongs.
+    """
+    merged: list[dict[str, Any]] = []
+    for group in groups or []:
+        letter = group.get("group") or group.get("name") or ""
+        for match in group.get("fixtures") or []:
+            merged.append(dict(match, group=match.get("group") or letter))
+    merged.sort(key=fixture_sort_key)
+    return merged
+
+
+def filter_fixtures(
+    matches: list[dict[str, Any]], status: str = "all"
+) -> list[dict[str, Any]]:
+    """Keep only played / upcoming fixtures; 'all' (or unknown) keeps everything."""
+    if status == "played":
+        return [match for match in matches or [] if is_played(match)]
+    if status == "upcoming":
+        return [match for match in matches or [] if not is_played(match)]
+    return list(matches or [])
 
 
 def composition_by_club(

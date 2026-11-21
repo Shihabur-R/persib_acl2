@@ -5,121 +5,103 @@
 <main class="content-wrapper">
     <div class="dashboard-intro">
         <h1 class="jl-page-title">Knockout Stage</h1>
-        <p class="group-label">Simulasi persiapan bagan babak gugur — Quarter-finals, Semi-finals, Final</p>
+        <p class="group-label">Bagan babak gugur mengikuti penyelesaian fase grup dan hasil undian</p>
     </div>
 
-    <div class="simulation-notice" role="note">
-        <strong>Simulasi pra-drawing.</strong>
-        Drawing resmi AFC belum dilakukan, sehingga pasangan pada bagan ini
-        <strong>bukan undian resmi</strong>. Slot diisi dari proyeksi klasemen grup
-        (peringkat 1 &amp; 2 Grup E–H) atau pilihan manual Anda, dan pemenang tiap
-        match ditentukan sendiri. Bagan ini alat persiapan analisis, bukan jadwal resmi.
-    </div>
+    <p class="transparency-note" role="status">{{ stage.note }}</p>
+    <p class="small-note">
+        Read-only · Grup {{ stage.groups|join(', ') }} · {{ stage.per_group }} wakil per grup ·
+        Undian: {% if stage.draw_available %}{{ stage.draw_ties|length }} pasangan{% else %}belum tersedia{% endif %}
+    </p>
 
-    <form method="post" action="{{ url_for('knockout') }}" id="knockout-form">
-        <!-- PENGISIAN SLOT -->
-        <section class="table-section">
-            <h2 class="section-title">PENGISIAN SLOT PESERTA</h2>
-            <p class="small-note">
-                Kosongkan untuk memakai proyeksi klasemen. Pilihan manual menimpa proyeksi
-                pada slot tersebut.
-            </p>
-            <div class="slot-grid">
-                {% for slot in slots %}
-                <div class="slot-card">
-                    <label for="slot-{{ slot.seed }}">
-                        <span class="seed-tag">{{ slot.seed }}</span>
-                        {{ slot.seed_label }}
-                    </label>
-                    <select id="slot-{{ slot.seed }}" name="slot_{{ slot.seed }}">
-                        <option value="">Otomatis (proyeksi klasemen)</option>
-                        {% for club in clubs %}
-                        <option value="{{ club.slug }}" {% if manual.get(slot.seed) == club.slug %}selected{% endif %}>
-                            {{ club.name }} (Grup {{ club.group_name }})
-                        </option>
-                        {% endfor %}
-                    </select>
-                    <p class="slot-current">
-                        Terisi: <strong>{{ slot.club.name }}</strong>
-                        <span class="slot-source slot-source-{{ slot.source }}">
-                            {% if slot.source == 'manual' %}pilihan manual
-                            {% elif slot.source == 'projection' %}proyeksi klasemen
-                            {% else %}belum tersedia{% endif %}
+    <!-- STATUS FASE GRUP -->
+    <section class="table-section">
+        <h2 class="section-title">STATUS FASE GRUP</h2>
+        <table class="data-table">
+            <thead>
+                <tr><th>Grup</th><th>Status</th><th>Laga tersisa</th><th>Keterangan</th></tr>
+            </thead>
+            <tbody>
+                {% for letter, info in completion.items() %}
+                <tr>
+                    <td>Grup {{ letter }}</td>
+                    <td>
+                        <span class="slot-source {% if info.complete %}slot-source-draw{% else %}slot-source-group_incomplete{% endif %}">
+                            {% if info.complete %}Selesai{% else %}Belum selesai{% endif %}
                         </span>
-                    </p>
-                </div>
+                    </td>
+                    <td>{{ info.remaining_fixtures }}</td>
+                    <td>{{ info.reason }}</td>
+                </tr>
+                {% else %}
+                <tr><td colspan="4">Klasemen grup belum tersedia.</td></tr>
                 {% endfor %}
-            </div>
-            <div class="form-actions">
-                <button type="submit" class="btn-primary">Perbarui Bagan</button>
-                <a class="btn-secondary" href="{{ url_for('knockout') }}">Reset ke Proyeksi</a>
-            </div>
-        </section>
+            </tbody>
+        </table>
+    </section>
 
-        <!-- BAGAN -->
-        <section class="table-section">
-            <h2 class="section-title">BAGAN BABAK GUGUR</h2>
-            {% if bracket.champion %}
-            <p class="champion-banner">
-                Juara simulasi: <strong>{{ bracket.champion.name }}</strong>
-            </p>
-            {% else %}
-            <p class="small-note">
-                Pilih pemenang tiap match untuk meneruskan klub ke babak berikutnya.
-            </p>
-            {% endif %}
+    <!-- SLOT PESERTA -->
+    <section class="table-section">
+        <h2 class="section-title">SLOT PESERTA BABAK GUGUR</h2>
+        <p class="small-note">
+            {{ bracket.filled_count }}/{{ bracket.slot_count }} terisi ·
+            {{ stage.pending_group_count }} grup belum selesai ·
+            {{ stage.pending_draw_count }} menunggu undian ·
+            {{ stage.empty_count }} kosong
+        </p>
+        <div class="slot-grid">
+            {% for slot in slots %}
+            <div class="slot-card">
+                <div class="slot-card-head">
+                    <span class="seed-tag">{{ slot.seed or '-' }}</span>
+                    <span class="slot-seed-label">{{ slot.seed_label }}</span>
+                </div>
+                <p class="slot-current">
+                    <strong>{{ slot.name }}</strong>
+                    <span class="slot-source slot-source-{{ slot.status }}">{{ slot.status_label }}</span>
+                </p>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
 
-            <div class="bracket-scroll">
-                <div class="bracket">
-                    {% for round in bracket.rounds %}
-                    <div class="bracket-round bracket-round-{{ round.key|lower }}">
-                        <h3 class="bracket-round-title">{{ round.label }}</h3>
-                        <div class="bracket-matches">
-                            {% for match in round.matches %}
-                            <div class="bracket-match {% if match.decided %}is-decided{% endif %}">
-                                <div class="bracket-match-id">{{ match.id }}</div>
-                                {% for side in ['home', 'away'] %}
-                                {% set team = match[side] %}
-                                <div class="bracket-team {% if match.decided and match.winner_side == side %}is-winner{% endif %}">
-                                    <span class="bracket-team-name">
-                                        {{ team.name if team else 'Menunggu pemenang' }}
-                                    </span>
-                                    {% if team and match.home and match.away %}
-                                    <label class="bracket-pick">
-                                        <input type="radio"
-                                               name="winner_{{ match.id }}"
-                                               value="{{ side }}"
-                                               {% if winners.get(match.id) == side %}checked{% endif %}>
-                                        <span>Menang</span>
-                                    </label>
-                                    {% endif %}
-                                </div>
-                                {% endfor %}
+    <!-- BAGAN -->
+    <section class="table-section">
+        <h2 class="section-title">BAGAN BABAK GUGUR</h2>
+        <p class="small-note">
+            {{ bracket.rounds|length }} babak · {{ bracket.slot_count }} slot
+            {% if stage.cross_group %}· lintas grup{% endif %}
+        </p>
+        {% if bracket.champion %}
+        <p class="champion-banner">Juara: <strong>{{ bracket.champion.name }}</strong></p>
+        {% else %}
+        <p class="small-note">Pemenang menunggu hasil laga tercatat.</p>
+        {% endif %}
+
+        <div class="bracket-scroll">
+            <div class="bracket">
+                {% for round in bracket.rounds %}
+                <div class="bracket-round bracket-round-{{ round.key|lower }}">
+                    <h3 class="bracket-round-title">{{ round.label }}</h3>
+                    <div class="bracket-matches">
+                        {% for match in round.matches %}
+                        <div class="bracket-match {% if match.decided %}is-decided{% endif %}">
+                            <div class="bracket-match-id">{{ match.id }}</div>
+                            {% for side in ['home', 'away'] %}
+                            {% set team = match[side] %}
+                            <div class="bracket-team {% if match.decided and match.winner_side == side %}is-winner{% endif %} {% if not team %}is-tbd{% endif %}">
+                                <span class="bracket-team-name">{{ team.name if team else 'TBD' }}</span>
+                                <span class="bracket-team-seed">{{ team.seed if team else '' }}</span>
                             </div>
                             {% endfor %}
                         </div>
+                        {% endfor %}
                     </div>
-                    {% endfor %}
                 </div>
+                {% endfor %}
             </div>
-            <div class="form-actions">
-                <button type="submit" class="btn-primary">Simulasikan Pemenang</button>
-            </div>
-        </section>
-    </form>
-
-    <section class="balance-card">
-        <h2 class="section-title">CATATAN &amp; KETERBATASAN</h2>
-        <ul class="limitation-list">
-            <li>Pasangan babak bersifat <strong>ilustratif</strong>: peringkat 1 grup bertemu
-                peringkat 2 dari grup lain. Undian resmi dapat berbeda sepenuhnya.</li>
-            <li>Simulasi tidak memperhitungkan <strong>aturan penjagaan grup</strong>,
-                keunggulan kandang, agregat dua leg, atau adu penalti.</li>
-            <li>Sumber slot adalah klasemen saat ini; bila klasemen masih kosong atau
-                memakai snapshot lokal, proyeksi peringkat bisa belum akurat.</li>
-            <li>Pemenang ditentukan <strong>manual oleh pengguna</strong>, bukan hasil
-                prediksi model.</li>
-        </ul>
+        </div>
     </section>
+
 </main>
 {% endblock %}

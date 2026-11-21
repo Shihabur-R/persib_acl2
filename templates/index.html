@@ -3,8 +3,13 @@
 {% block content %}
     <main class="content-wrapper">
         <div class="dashboard-intro">
-            <h1 class="jl-page-title">Group E–H Fixtures & Standings</h1>
-            <p class="group-label">AFC Champions League Two 2026/27</p>
+            <h1 class="jl-page-title">
+                {% if active_group %}Group {{ active_group }} Fixtures &amp; Standings{% else %}Fixtures &amp; Standings{% endif %}
+            </h1>
+            <p class="group-label">
+                AFC Champions League Two 2026/27
+                {% if group_letters %}· Grup {{ group_letters|join(', ') }}{% endif %}
+            </p>
             <div class="timezone-notice">
                 <span class="timezone-pill">
                     <span class="timezone-dot" aria-hidden="true"></span>
@@ -14,8 +19,9 @@
         </div>
 
         <nav class="group-switcher" aria-label="Pilih grup">
-            {% for group in groups %}
-            <a href="#group-{{ group.name }}">Group {{ group.name }}</a>
+            {% for letter in group_letters %}
+            <a href="{{ url_for('home', group=letter) }}"
+               {% if letter == active_group %}class="is-active" aria-current="true"{% endif %}>Group {{ letter }}</a>
             {% endfor %}
         </nav>
 

@@ -408,9 +408,11 @@ body {
 /* ==========================================================================
    PERBAIKAN TOTAL: TEKS PUTIH KONTRAST TINGGI (100% TERBACA JELAS)
    ========================================================================== */
+/* Lebar & padding horizontal sama dengan .header-container / .content-wrapper
+   agar tepi konten sejajar dengan navigasi di header. */
 .jl-fixtures-wrapper {
-    max-width: 1040px;
-    margin: 40px auto;
+    max-width: 1200px;
+    margin: 30px auto;
     padding: 0 20px;
     background: transparent !important;
 }
@@ -645,6 +647,32 @@ body {
 
 .group-switcher a:hover {
     background: var(--league-blue);
+}
+
+/* Grup aktif: hanya grup ini yang dirender server, jadi tombolnya ditandai. */
+.group-switcher a.is-active {
+    background: var(--league-blue);
+    color: #fff;
+}
+
+/* Filter status pertandingan: lebih rapat agar terpisah dari filter grup. */
+.status-switcher {
+    margin-bottom: 12px;
+}
+
+.status-switcher a {
+    font-size: 0.85rem;
+    padding: 4px 14px;
+}
+
+/* Penanda grup pada jadwal gabungan lintas grup. */
+.match-group-tag {
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    border-radius: 10px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    margin-right: 6px;
+    padding: 1px 7px;
 }
 
 .group-dashboard,

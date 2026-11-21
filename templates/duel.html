@@ -32,6 +32,22 @@
                 {% endfor %}
             </select>
         </label>
+        <label>
+            Lokasi laga
+            <select name="venue">
+                {% for value in venues %}
+                <option value="{{ value }}" {% if value == selected_venue %}selected{% endif %}>{{ venue_labels[value] }}</option>
+                {% endfor %}
+            </select>
+        </label>
+        <label>
+            Lawan (head-to-head)
+            <select name="opponent">
+                {% for club in opponents %}
+                <option value="{{ club.slug }}" {% if club.slug == selected_opponent %}selected{% endif %}>{{ club.name }}</option>
+                {% endfor %}
+            </select>
+        </label>
         <fieldset class="goal-inputs">
             <legend>Gol Skenario A (opsional)</legend>
             <label>Gol dicetak
@@ -65,11 +81,15 @@
     {% endif %}
 
     <p class="small-note">
-        Kolom gol boleh dikosongkan: sistem otomatis memakai rata-rata gol per laga
-        ({{ goal_baseline.goals_for }} dicetak / {{ goal_baseline.goals_against }} kemasukan).
-        Mengisi satu kolom saja akan menurunkan sisi lainnya dari hasil yang dipilih.
-        Skor yang bertentangan dengan hasil (mis. "Menang" tetapi gol lebih sedikit)
-        disesuaikan otomatis.
+        Kolom gol opsional; kosong memakai proyeksi {{ goal_baseline.goals_for }}–{{ goal_baseline.goals_against }}
+        {% if goal_baseline.component_labels %}
+        dari {{ goal_baseline.component_labels|join(', ') }}
+        (sampel: kandang/tandang {{ goal_baseline.samples.venue }}, form {{ goal_baseline.samples.form }},
+        head-to-head {{ goal_baseline.samples.h2h }} laga;
+        laju {{ goal_baseline.rate_for }} dicetak / {{ goal_baseline.rate_against }} kemasukan per laga).
+        {% else %}
+        dari rata-rata musim; data laga belum cukup.
+        {% endif %}
     </p>
 
     {% if scenario_result %}
@@ -119,15 +139,8 @@
             — {{ scenario_result.verdict.balance_label_id }}</p>
         <p>Kedekatan poin/laga kedua skenario: <strong>{{ scenario_result.verdict.gap_score }}</strong></p>
         <p class="small-note">
-            Proyeksi kini mencakup gol dan selisih gol dari input Anda atau rata-rata
-            musim. Skor kesimetrisan mengukur seberapa merata sebaran menang/seri/kalah
-            (100 = merata sempurna), bukan kekuatan tim. Keuntungan tetap dihitung dari
-            poin, dengan gol sebagai pembanding sekunder.
-        </p>
-        <p>
-            <a class="btn-primary" href="{{ url_for('picks', club=selected_club.slug, result_a=scenario_result.result_a, result_b=scenario_result.result_b) }}">
-                Simpan sebagai Pick
-            </a>
+            Keuntungan dihitung dari poin, gol sebagai pembanding sekunder.
+            Kesimetrisan 100 = sebaran menang/seri/kalah merata.
         </p>
     </section>
     {% endif %}

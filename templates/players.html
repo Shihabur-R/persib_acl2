@@ -24,8 +24,8 @@
                 <div class="form-group">
                     <label for="filter-group">Grup</label>
                     <select id="filter-group" name="group">
-                        <option value="">Semua Grup (E–H)</option>
-                        {% for g in ['E', 'F', 'G', 'H'] %}
+                        <option value="">All Groups</option>
+                        {% for g in group_letters %}
                         <option value="{{ g }}" {% if current_group == g %}selected{% endif %}>Group {{ g }}</option>
                         {% endfor %}
                     </select>

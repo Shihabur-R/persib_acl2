@@ -53,8 +53,15 @@ STANDINGS_API = (
     "?competitionCode=afc-champions-league-two&season=20262027&locale=en"
 )
 
+# Every group the parser accepts (A–H). East-zone E–H is the current dataset;
+# A–D stay empty until their data arrives, then appear automatically.
+SUPPORTED_GROUPS = ("A", "B", "C", "D", "E", "F", "G", "H")
 GROUP_NAMES = ("E", "F", "G", "H")
-CACHE_TTL_SECONDS = 300  # Keep API responses for five minutes.
+CACHE_TTL_SECONDS = 300  # Keep successful API responses for five minutes.
+FALLBACK_TTL_SECONDS = 60  # Retry sooner after an outage so recovery is quick.
+FETCH_RETRIES = 3  # Transient failures get a short backoff before falling back.
+RETRY_BACKOFF_SECONDS = 0.5
+FETCH_TIMEOUT_SECONDS = 10
 
 # Alias map ported from legacy app.py: AFC display names/slugs -> local DB slug.
 # Needed because the API returns short names ("Seoul", "Kitchee", "TAMPINES
@@ -97,9 +104,11 @@ TEAM_SLUG_MAP = {
     "gangwon fc": "gangwon-fc",
 }
 
-# In-memory cache: endpoint -> (fetched_epoch, payload)
-_cache: dict[str, tuple[float, Any]] = {}
-# Provenance per snapshot key: "live" | "snapshot" | "empty" (for UI notices).
+# In-memory cache: endpoint -> (fetched_epoch, payload, is_live)
+_cache: dict[str, tuple[float, Any, bool]] = {}
+# Last successful live payload per endpoint, used as a stale-but-fresh fallback.
+_last_good: dict[str, Any] = {}
+# Provenance per key: "live" | "stale" | "snapshot" | "empty" (for UI notices).
 _source_status: dict[str, str] = {}
 
 
@@ -166,7 +175,7 @@ def get_club_by_slug(slug: str) -> dict[str, Any] | None:
 def _fetch_json(url: str) -> Any:
     """Fetch a JSON payload from the AFC API and validate its shape."""
     request = Request(url, headers={"User-Agent": "ACL2-Analytics-Simulation/2.0"})
-    with urlopen(request, timeout=15) as response:
+    with urlopen(request, timeout=FETCH_TIMEOUT_SECONDS) as response:
         body = response.read()
         if response.headers.get("Content-Encoding") == "gzip":
             body = gzip.decompress(body)
@@ -188,15 +197,56 @@ def _load_snapshot() -> dict[str, Any]:
         return {"fixtures": [], "standings": []}
 
 
+def _fetch_with_retry(url: str) -> list[dict[str, Any]]:
+    """
+    Fetch one endpoint, retrying transient failures with a short backoff.
+
+    Permanent client errors (4xx other than 429) are not retried, so an outage
+    cannot multiply the request latency for every page view.
+    """
+    last_error: Exception | None = None
+    for attempt in range(FETCH_RETRIES):
+        try:
+            return _fetch_json(url)
+        except HTTPError as exc:
+            last_error = exc
+            if exc.code < 500 and exc.code != 429:
+                raise
+        except (
+            URLError,
+            TimeoutError,
+            OSError,
+            ValueError,
+            EOFError,
+            gzip.BadGzipFile,
+            json.JSONDecodeError,
+        ) as exc:
+            last_error = exc
+        if attempt < FETCH_RETRIES - 1:
+            time.sleep(RETRY_BACKOFF_SECONDS * (attempt + 1))
+    raise last_error if last_error else ValueError("Fetch failed")
+
+
 def _fetch_with_cache(url: str, snapshot_key: str) -> list[dict[str, Any]]:
-    """Return API data with TTL caching and a safe snapshot fallback."""
+    """
+    Return API data with TTL caching and layered fallbacks.
+
+    Order of preference: fresh cache -> live API (with retry) -> last known good
+    payload (stale) -> bundled snapshot -> empty. Fallbacks are cached with a
+    shorter TTL so recovery is picked up quickly without hammering a dead API.
+    """
     now = time.monotonic()
     cached = _cache.get(url)
-    if cached and now - cached[0] < CACHE_TTL_SECONDS:
-        return cached[1]
+    if cached:
+        fetched_at, payload, fresh = cached
+        ttl = CACHE_TTL_SECONDS if fresh else FALLBACK_TTL_SECONDS
+        if now - fetched_at < ttl:
+            return payload
 
+    data: list[dict[str, Any]] = []
+    fresh = False
     try:
-        data = _fetch_json(url)
+        payload = _fetch_with_retry(url)
     except (
         HTTPError,
         URLError,
@@ -207,24 +257,60 @@ def _fetch_with_cache(url: str, snapshot_key: str) -> list[dict[str, Any]]:
         gzip.BadGzipFile,
         json.JSONDecodeError,
     ) as exc:
-        logger.warning("AFC API failed for %s: %s. Using snapshot fallback.", url, exc)
-        data = _load_snapshot().get(snapshot_key) or []
-        _source_status[snapshot_key] = "snapshot" if data else "empty"
+        logger.warning("AFC API failed for %s: %s. Using fallback.", url, exc)
     else:
-        if not data:
-            # A well-formed but empty response is treated like an outage.
-            logger.warning("AFC API returned no %s records; using snapshot.", snapshot_key)
-            data = _load_snapshot().get(snapshot_key) or []
-            _source_status[snapshot_key] = "snapshot" if data else "empty"
-        else:
+        if isinstance(payload, list) and payload:
+            data, fresh = payload, True
             _source_status[snapshot_key] = "live"
+        else:
+            # A well-formed but empty response is treated like an outage.
+            logger.warning("AFC API returned no %s records; using fallback.", snapshot_key)
+
+    if not fresh:
+        stale = _last_good.get(url)
+        snapshot = _load_snapshot().get(snapshot_key) or []
+        if stale:
+            # Previously fetched live data beats a possibly older bundled file.
+            data = stale
+            _source_status[snapshot_key] = "stale"
+        elif isinstance(snapshot, list) and snapshot:
+            data = snapshot
+            _source_status[snapshot_key] = "snapshot"
+        else:
+            data = []
+            _source_status[snapshot_key] = "empty"
+
     if not isinstance(data, list):
         data = []
         _source_status[snapshot_key] = "empty"
-    # Cache the fallback too, so an outage does not re-trigger a 15s timeout
-    # on every single request.
-    _cache[url] = (now, data)
+    if fresh and data:
+        _last_good[url] = data
+    _cache[url] = (now, data, fresh)
     return data
+
+
+def load_knockout_draw() -> list[dict[str, Any]]:
+    """
+    Return the official knockout draw ties, or [] when the draw is not published.
+
+    Read-only dataset (snapshot key 'knockout_draw'); the application never
+    invents pairings and offers no manual override.
+    """
+    draw = _load_snapshot().get("knockout_draw") or []
+    _source_status["knockout_draw"] = "snapshot" if draw else "empty"
+    return draw if isinstance(draw, list) else []
+
+
+def load_knockout_results() -> dict[str, Any]:
+    """
+    Return recorded knockout results keyed by match id, or {} when unavailable.
+
+    Read-only dataset (snapshot key 'knockout_results'); winners are never chosen
+    by the user.
+    """
+    results = _load_snapshot().get("knockout_results") or {}
+    _source_status["knockout_results"] = "snapshot" if results else "empty"
+    return results if isinstance(results, dict) else {}
 
 
 def get_data_status() -> dict[str, str]:
@@ -233,21 +319,23 @@ def get_data_status() -> dict[str, str]:
 
 
 def load_fixtures() -> list[dict[str, Any]]:
-    """Return fixtures normalized for the four East-zone groups."""
+    """Return fixtures for any populated group in A–H (empty groups are omitted)."""
     records = _fetch_with_cache(FIXTURES_API, "fixtures")
-    normalized: dict[str, list[dict[str, Any]]] = {name: [] for name in GROUP_NAMES}
+    normalized: dict[str, list[dict[str, Any]]] = {name: [] for name in SUPPORTED_GROUPS}
 
     for record in records:
         group_label = (record.get("group") or {}).get("name", "")
         if not group_label.startswith("Group "):
             continue
-        letter = group_label.removeprefix("Group ")
-        if letter not in GROUP_NAMES:
+        letter = group_label.removeprefix("Group ").strip().upper()
+        if letter not in SUPPORTED_GROUPS:
             continue
         normalized[letter].append(_normalize_fixture(record))
 
     groups = []
-    for letter in GROUP_NAMES:
+    for letter in SUPPORTED_GROUPS:
+        if not normalized[letter]:
+            continue
         matches = normalized[letter]
         matches.sort(
             key=lambda item: (item.get("date_venue") or "", item.get("time_venue") or "")
@@ -264,22 +352,24 @@ def load_fixtures() -> list[dict[str, Any]]:
 
 
 def load_standings() -> list[dict[str, Any]]:
-    """Return standings normalized for the four East-zone groups."""
+    """Return standings for any populated group in A–H (empty groups are omitted)."""
     records = _fetch_with_cache(STANDINGS_API, "standings")
-    normalized: dict[str, list[dict[str, Any]]] = {name: [] for name in GROUP_NAMES}
+    normalized: dict[str, list[dict[str, Any]]] = {name: [] for name in SUPPORTED_GROUPS}
 
     for record in records:
         group_label = record.get("groupName") or ""
         if not group_label.startswith("Group "):
             continue
-        letter = group_label.removeprefix("Group ")
-        if letter not in GROUP_NAMES:
+        letter = group_label.removeprefix("Group ").strip().upper()
+        if letter not in SUPPORTED_GROUPS:
             continue
         for row in record.get("standings", []):
             normalized[letter].append(_normalize_standing(row, letter))
     groups = []
-    for letter in GROUP_NAMES:
+    for letter in SUPPORTED_GROUPS:
         rows = normalized[letter]
+        if not rows:
+            continue
         rows.sort(key=lambda row: row.get("rank", 99))
         groups.append({"group": letter, "name": letter, "standings": rows})
     return groups
@@ -427,6 +517,11 @@ def get_club_slug(*candidates: Any) -> str:
             return normalized
         if normalized in TEAM_SLUG_MAP:
             return TEAM_SLUG_MAP[normalized]
+        # Clubs added later (e.g. groups A–D) resolve by their database name,
+        # so no hand-maintained alias entry is needed for every new team.
+        by_name = _slugs_by_name()
+        if normalized in by_name:
+            return by_name[normalized]
         for key, slug in TEAM_SLUG_MAP.items():
             if key in normalized or normalized in key:
                 return slug
@@ -434,6 +529,26 @@ def get_club_slug(*candidates: Any) -> str:
 
 
 _slug_cache: tuple[float, set[str]] | None = None
+_name_slug_cache: tuple[float, dict[str, str]] | None = None
+
+
+def _slugs_by_name() -> dict[str, str]:
+    """Cached lowercase club name -> slug map, used for newly seeded clubs."""
+    global _name_slug_cache
+    now = time.monotonic()
+    if _name_slug_cache and now - _name_slug_cache[0] < CACHE_TTL_SECONDS:
+        return _name_slug_cache[1]
+    try:
+        mapping = {
+            club["name"].strip().lower(): club["slug"]
+            for club in get_clubs()
+            if club.get("name") and club.get("slug")
+        }
+    except (sqlite3.Error, FileNotFoundError) as exc:
+        logger.warning("Could not read club names for slug mapping: %s", exc)
+        mapping = {}
+    _name_slug_cache = (now, mapping)
+    return mapping
 
 
 def _known_slugs() -> set[str]:
@@ -526,6 +641,7 @@ def load_dashboard_groups() -> list[dict[str, Any]]:
     """
     fixtures = {group["group"]: group["fixtures"] for group in load_fixtures()}
     standings = {group["group"]: group["standings"] for group in load_standings()}
+    letters = sorted(set(fixtures) | set(standings)) or list(GROUP_NAMES)
     return [
         {
             "name": letter,
@@ -533,7 +649,7 @@ def load_dashboard_groups() -> list[dict[str, Any]]:
             "fixtures": fixtures.get(letter, []),
             "standings": standings.get(letter, []),
         }
-        for letter in GROUP_NAMES
+        for letter in letters
     ]
 
 
@@ -548,23 +664,28 @@ def get_database_stats() -> dict[str, Any]:
             "total_clubs": len(clubs),
             "total_players": len(get_players()),
             "season": "2026/2027",
-            "zones": "East Zone (Grup E, F, G, H)",
+            "zones": "Group " + ", ".join(GROUP_NAMES),
         }
 
 
 def get_season_context() -> dict[str, Any]:
     """Return a small context object used across templates."""
     status = get_data_status()
-    used_snapshot = "snapshot" in status.values() or not status
+    values = set(status.values())
+    if not status or "empty" in values:
+        label = "Data belum tersedia"
+    elif "snapshot" in values:
+        label = "Snapshot lokal (API AFC tidak terjangkau)"
+    elif "stale" in values:
+        label = "Cache data terakhir (API AFC sedang gangguan)"
+    else:
+        label = "AFC Public API (live)"
+    letters = [group["group"] for group in load_standings()] or list(GROUP_NAMES)
     return {
         "season": "2026/2027",
         "competition": "AFC Champions League Two",
-        "zone": "East Zone (Group E–H)",
+        "zone": "Grup " + ", ".join(letters),
         "source_url": SOURCE_URL,
-        "source_label": (
-            "Snapshot lokal (API AFC tidak terjangkau)"
-            if used_snapshot
-            else "AFC Public API (live)"
-        ),
+        "source_label": label,
         "data_status": status,
     }

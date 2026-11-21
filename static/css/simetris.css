@@ -350,22 +350,7 @@
 .source-indicator-snapshot { background: #422006; color: #fde68a; border: 1px solid #a16207; }
 .source-indicator-empty { background: #3f1e1e; color: #fca5a5; border: 1px solid #b91c1c; }
 
-/* --- Pre-draw simulation notice --- */
-.simulation-notice {
-    background: #1e1b4b;
-    border: 1px solid var(--league-blue);
-    border-left: 4px solid var(--league-blue);
-    border-radius: 10px;
-    padding: 14px 18px;
-    font-size: 0.9rem;
-    line-height: 1.6;
-    color: var(--league-text-soft);
-    margin-bottom: 24px;
-}
-
-.simulation-notice strong { color: var(--league-text); }
-
-/* --- Slot filling --- */
+/* --- Slot peserta fase gugur --- */
 .slot-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
@@ -380,7 +365,7 @@
     padding: 12px;
 }
 
-.slot-card label {
+.slot-card-head {
     display: flex;
     align-items: center;
     gap: 8px;
@@ -388,6 +373,8 @@
     font-weight: 600;
     margin-bottom: 8px;
 }
+
+.slot-seed-label { color: var(--league-text-soft); }
 
 .seed-tag {
     background: var(--league-blue);
@@ -398,8 +385,6 @@
     font-size: 0.85rem;
     letter-spacing: 1px;
 }
-
-.slot-card select { width: 100%; }
 
 .slot-current {
     font-size: 0.78rem;
@@ -415,8 +400,10 @@
     margin-left: 4px;
 }
 
-.slot-source-projection { background: #1e3a5f; color: #93c5fd; }
-.slot-source-manual { background: #3f2d1e; color: #fcd34d; }
+/* Status slot read-only: terisi dari undian, menunggu grup, menunggu undian, kosong. */
+.slot-source-draw { background: #14321f; color: #bbf7d0; }
+.slot-source-group_incomplete { background: #3f2d1e; color: #fcd34d; }
+.slot-source-draw_pending { background: #1e3a5f; color: #93c5fd; }
 .slot-source-empty { background: #3f1e1e; color: #fca5a5; }
 
 .form-actions {
@@ -530,17 +517,22 @@
     white-space: nowrap;
 }
 
-.bracket-pick {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    font-size: 0.7rem;
-    color: var(--league-text-soft);
+.bracket-team.is-tbd .bracket-team-name {
+    color: var(--league-muted);
+    font-style: italic;
+}
+
+.bracket-team-seed {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 0.72rem;
+    letter-spacing: 1px;
+    color: var(--league-muted);
     white-space: nowrap;
-    cursor: pointer;
 }
 
 /* Garis penghubung antar babak (dekoratif, khas bracket). */
+.bracket-round-r32 .bracket-match::after,
+.bracket-round-r16 .bracket-match::after,
 .bracket-round-qf .bracket-match::after,
 .bracket-round-sf .bracket-match::after {
     content: "";

@@ -3,8 +3,13 @@
 {% block content %}
     <main class="content-wrapper">
         <div class="dashboard-intro">
-            <h1 class="jl-page-title">Klub & Skuad ACL2 Zona Timur</h1>
-            <p class="group-label">AFC Champions League Two 2026/2027 · Database Resmi Grup E–H</p>
+            <h1 class="jl-page-title">
+                {% if active_group == 'ALL' %}Klub &amp; Skuad ACL2{% else %}Klub &amp; Skuad Grup {{ active_group }}{% endif %}
+            </h1>
+            <p class="group-label">
+                AFC Champions League Two 2026/2027
+                {% if group_letters %}· Group {{ group_letters|join(', ') }}{% endif %}
+            </p>
             <div class="timezone-notice">
                 <span class="timezone-pill">
                     <span class="timezone-dot" aria-hidden="true"></span>
@@ -13,9 +18,12 @@
             </div>
         </div>
 
-        <nav class="group-switcher" aria-label="Pilih grup">
-            {% for grp in ['E', 'F', 'G', 'H'] %}
-            <a href="#group-{{ grp }}">Group {{ grp }}</a>
+        <nav class="group-switcher" aria-label="Group filter">
+            <a href="{{ url_for('clubs', group='all') }}"
+               {% if active_group == 'ALL' %}class="is-active" aria-current="true"{% endif %}>All</a>
+            {% for grp in group_letters %}
+            <a href="{{ url_for('clubs', group=grp) }}"
+               {% if grp == active_group %}class="is-active" aria-current="true"{% endif %}>Group {{ grp }}</a>
             {% endfor %}
         </nav>
 

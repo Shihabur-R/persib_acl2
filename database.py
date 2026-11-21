@@ -1,7 +1,7 @@
 """
 database.py
 Modul helper untuk mengakses database SQLite (acl2.db).
-Menyediakan fungsi-fungsi query untuk klub dan pemain ACL2 Zona Timur (Grup E–H).
+Menyediakan fungsi-fungsi query untuk klub dan pemain ACL2 (Grup A–H).
 """
 
 import os
@@ -10,6 +10,9 @@ from contextlib import contextmanager
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DB_PATH = os.path.join(BASE_DIR, "acl2.db")
+
+# Semua grup yang diterima; grup tanpa data tidak ditampilkan.
+SUPPORTED_GROUPS = ("A", "B", "C", "D", "E", "F", "G", "H")
 
 
 @contextmanager
@@ -35,7 +38,7 @@ def get_db_connection():
 
 
 def get_all_clubs():
-    """Mengambil seluruh 16 klub peserta ACL2 Grup E-H."""
+    """Mengambil seluruh klub peserta ACL2 yang ada di database (Grup A–H)."""
     with get_db_connection() as conn:
         cursor = conn.cursor()
         cursor.execute("""
@@ -48,14 +51,18 @@ def get_all_clubs():
 
 
 def get_clubs_grouped():
-    """Mengambil klub yang dikelompokkan berdasarkan grup (E, F, G, H)."""
-    clubs = get_all_clubs()
-    grouped = {"E": [], "F": [], "G": [], "H": []}
-    for club in clubs:
-        grp = club.get("group_name")
-        if grp in grouped:
-            grouped[grp].append(club)
-    return grouped
+    """
+    Mengelompokkan klub per grup, hanya grup yang benar-benar punya data.
+
+    Grup A–H didukung; grup kosong tidak ditampilkan agar tidak ada seksi hampa.
+    """
+    grouped: dict[str, list] = {}
+    for club in get_all_clubs():
+        grp = (club.get("group_name") or "").strip().upper()
+        if grp not in SUPPORTED_GROUPS:
+            continue
+        grouped.setdefault(grp, []).append(club)
+    return {letter: grouped[letter] for letter in SUPPORTED_GROUPS if letter in grouped}
 
 
 def get_club_by_slug(slug):
@@ -105,9 +112,9 @@ def search_players(query=None, group_name=None, position=None, club_id=None):
             q_like = f"%{query.strip()}%"
             params.extend([q_like, q_like, q_like])
 
-        if group_name and group_name in ("E", "F", "G", "H"):
+        if group_name and group_name.strip().upper() in SUPPORTED_GROUPS:
             sql += " AND c.group_name = ?"
-            params.append(group_name)
+            params.append(group_name.strip().upper())
 
         if club_id:
             sql += " AND p.club_id = ?"
@@ -140,9 +147,18 @@ def get_database_stats():
         total_clubs = cursor.fetchone()[0]
         cursor.execute("SELECT COUNT(*) FROM players")
         total_players = cursor.fetchone()[0]
+        cursor.execute(
+            "SELECT DISTINCT group_name FROM clubs WHERE group_name IS NOT NULL ORDER BY group_name"
+        )
+        letters = [
+            row[0].strip().upper()
+            for row in cursor.fetchall()
+            if row[0] and row[0].strip().upper() in SUPPORTED_GROUPS
+        ]
         return {
             "total_clubs": total_clubs,
             "total_players": total_players,
             "season": "2026/2027",
-            "zones": "East Zone (Grup E, F, G, H)"
+            "groups": letters,
+            "zones": "Group " + ", ".join(letters) if letters else "Group",
         }

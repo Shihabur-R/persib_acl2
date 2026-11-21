@@ -5,7 +5,7 @@
 <main class="content-wrapper">
     <div class="dashboard-intro">
         <h1 class="jl-page-title">Temuan Statistik</h1>
-        <p class="group-label">Dua temuan dari dataset ACL2 2026/27 Zona Timur</p>
+        <p class="group-label">Dua temuan dari dataset ACL2 2026/27</p>
         <div class="timezone-notice">
             <span class="timezone-pill">
                 <span class="timezone-dot" aria-hidden="true"></span>
@@ -17,10 +17,7 @@
     <!-- TEMUAN 1 -->
     <section class="table-section">
         <h2 class="section-title">TEMUAN 1 · DISTRIBUSI POSISI SKUAD PER KLUB</h2>
-        <p class="small-note">
-            Jumlah pemain per lini (GK/DF/MF/FW). Bar menunjukkan proporsi tiap lini
-            terhadap total skuad klub tersebut.
-        </p>
+        <p class="small-note">Jumlah pemain per lini; bar menunjukkan proporsi skuad.</p>
         <div class="table-responsive">
             <table class="j-table">
                 <thead>
@@ -124,22 +121,5 @@
         </div>
     </section>
 
-    <!-- KETERBATASAN -->
-    <section class="balance-card">
-        <h2 class="section-title">KETERBATASAN DATASET</h2>
-        <ul class="limitation-list">
-            <li>Proyeksi <strong>Scenario Duel memakai gol input atau rata-rata musim</strong>;
-                rata-rata adalah penyederhanaan dan tidak mencerminkan kekuatan lawan,
-                kondisi kandang/tandang, atau variasi performa antar laga.</li>
-            <li><strong>Knockout Stage adalah simulasi pra-drawing</strong> — pasangan babak
-                bersifat ilustratif dan bukan undian resmi AFC.</li>
-            <li>Data skuad bersifat <strong>statis satu musim</strong> (2026/27); transfer, cedera,
-                dan perubahan nomor punggung tidak tercermin sampai database dibangun ulang.</li>
-            <li>Data fixtures &amp; klasemen bergantung pada <strong>API eksternal AFC</strong>;
-                saat API tidak terjangkau aplikasi memakai snapshot lokal yang bisa tertinggal.</li>
-            <li>Balance Meter mengukur <strong>kemiripan distribusi</strong>, bukan kualitas pemain —
-                skor tinggi tidak berarti kedua tim sama kuat.</li>
-        </ul>
-    </section>
 </main>
 {% endblock %}

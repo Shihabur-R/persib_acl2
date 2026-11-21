@@ -17,3 +17,7 @@ ENV/
 *.swo
 Thumbs.db
 Desktop.ini
+
+# Local backups & test artifacts
+*.bak
+.pytest_cache/

@@ -1,0 +1,47 @@
+<article class="jl-match-row">
+    <div class="jl-col-time">
+        <span class="jl-time-text" {% if match.iso_utc %}data-utc-date="{{ match.iso_utc }}"{% endif %}>{{ match.tanggal }}</span>
+        <span class="jl-ko-text">
+            {% if show_group %}<span class="match-group-tag">Group {{ match.group }}</span>{% endif %}
+            {{ match.matchweek }}
+        </span>
+        {% if match.waktu %}<span class="jl-ko-text" {% if match.iso_utc %}data-utc-time="{{ match.iso_utc }}"{% endif %}>{{ match.waktu }}</span>{% endif %}
+    </div>
+    <div class="jl-col-fixture-matrix">
+        <div class="jl-team-block jl-team-home">
+            {% if match.home_slug %}
+            <a href="{{ url_for('club_detail', slug=match.home_slug) }}" class="jl-team-name-text club-link" title="Lihat Skuad {{ match.home }}">{{ match.home }}</a>
+            {% else %}
+            <span class="jl-team-name-text">{{ match.home }}</span>
+            {% endif %}
+            {% if match.home_logo %}
+            <img src="{{ match.home_logo }}" alt="" class="jl-mini-crest">
+            {% else %}
+            <span class="club-badge">{{ match.home_badge }}</span>
+            {% endif %}
+        </div>
+        <div class="jl-score-status-block">
+            {% if match.status == 'FT' %}
+            <div class="jl-score-box-numbers">
+                {{ match.skor_home }}<span class="jl-num-divider">-</span>{{ match.skor_away }}
+            </div>
+            <span class="jl-badge-status-flat jl-ft-color">Full Time</span>
+            {% else %}
+            <div class="jl-vs-box-text">VS</div>
+            <span class="jl-badge-status-flat jl-scheduled-color">Jadwal</span>
+            {% endif %}
+        </div>
+        <div class="jl-team-block jl-team-away">
+            {% if match.away_logo %}
+            <img src="{{ match.away_logo }}" alt="" class="jl-mini-crest">
+            {% else %}
+            <span class="club-badge">{{ match.away_badge }}</span>
+            {% endif %}
+            {% if match.away_slug %}
+            <a href="{{ url_for('club_detail', slug=match.away_slug) }}" class="jl-team-name-text club-link" title="Lihat Skuad {{ match.away }}">{{ match.away }}</a>
+            {% else %}
+            <span class="jl-team-name-text">{{ match.away }}</span>
+            {% endif %}
+        </div>
+    </div>
+</article>

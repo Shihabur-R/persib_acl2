@@ -22,6 +22,8 @@
                         {% set source_kind, source_text = 'empty', 'Data tidak tersedia' %}
                     {% elif 'snapshot' in statuses %}
                         {% set source_kind, source_text = 'snapshot', 'Snapshot lokal' %}
+                    {% elif 'stale' in statuses %}
+                        {% set source_kind, source_text = 'snapshot', 'Cache data terakhir' %}
                     {% else %}
                         {% set source_kind, source_text = 'live', 'API AFC (live)' %}
                     {% endif %}
@@ -38,15 +40,12 @@
             </button>
             <nav class="nav-links" id="primary-nav" aria-label="Navigasi utama">
                 {% set nav_items = [
-                    ('home', 'Home', 'Ringkasan grup'),
-                    ('balance', 'Balance Meter', 'Ukur keseimbangan dua sisi'),
+                    ('home', 'Home', 'Ringkasan grup & klasemen'),
                     ('duel', 'Scenario Duel', 'Bandingkan dua proyeksi hasil'),
-                    ('picks', 'Saved Picks', 'Perbandingan tersimpan'),
-                    ('knockout', 'Knockout Stage', 'Simulasi bagan gugur pra-drawing'),
+                    ('knockout', 'Knockout Stage', 'Bagan gugur sesuai hasil grup & undian'),
                     ('insights', 'Insights', 'Temuan statistik & keterbatasan'),
                     ('fixtures', 'Fixtures', 'Jadwal & hasil pertandingan'),
-                    ('clubs', 'Klub & Skuad', 'Profil 16 klub peserta'),
-                    ('players', 'Daftar Pemain', 'Cari & filter pemain')
+                    ('clubs', 'Klub & Skuad', 'Profil 16 klub peserta')
                 ] %}
                 {% for endpoint, label, hint in nav_items %}
                 <a href="{{ url_for(endpoint) }}" title="{{ hint }}"
@@ -56,10 +55,14 @@
         </div>
     </header>
 
-    {% if season and season.data_status and 'snapshot' in season.data_status.values() %}
+    {% if season and season.data_status and ('snapshot' in season.data_status.values() or 'stale' in season.data_status.values()) %}
     <div class="content-wrapper">
         <p class="data-source-banner" role="status">
-            Menampilkan <strong>snapshot lokal</strong> — API AFC sedang tidak terjangkau.
+            {% if 'snapshot' in season.data_status.values() %}
+            Menampilkan <strong>snapshot lokal</strong> — API AFC tidak terjangkau.
+            {% else %}
+            Menampilkan <strong>cache data terakhir</strong> — API AFC sedang gangguan.
+            {% endif %}
             Data mungkin tidak sebaru pertandingan terakhir.
         </p>
     </div>
