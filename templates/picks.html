@@ -1,0 +1,64 @@
+{% extends "_layout.html" %}
+{% block title %}Saved Picks — PERSIB Simetris{% endblock %}
+{% block content %}
+<main class="content-wrapper">
+    <div class="dashboard-intro">
+        <h1 class="jl-page-title">💾 Saved Picks</h1>
+        <p class="group-label">Simpan, lihat, dan hapus perbandingan skenario pilihan Anda.</p>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+            <div class="flash flash-{{ category }}" role="alert">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <form method="post" class="filter-panel" aria-label="Save pick form">
+        <label>
+            Title
+            <input type="text" name="title" placeholder="e.g., Best scenario vs Seoul" required maxlength="80">
+        </label>
+        <label>
+            Club
+            <select name="club">
+                {% for club in clubs %}
+                <option value="{{ club.slug }}">{{ club.name }}</option>
+                {% endfor %}
+            </select>
+        </label>
+        <label>
+            Scenario A
+            <input type="text" name="side_a" placeholder="e.g., Win at home" required maxlength="120">
+        </label>
+        <label>
+            Scenario B
+            <input type="text" name="side_b" placeholder="e.g., Draw away" required maxlength="120">
+        </label>
+        <button type="submit" class="btn-primary">Save Pick</button>
+    </form>
+
+    {% if saved %}
+    <section class="saved-list" aria-label="Saved picks">
+        {% for pick in saved %}
+        <article class="saved-card">
+            <div class="saved-header">
+                <h3>{{ pick.title }}</h3>
+                <form method="post" action="{{ url_for('delete_pick', pick_id=pick.id) }}" class="inline-form">
+                    <button type="submit" class="btn-danger">Delete</button>
+                </form>
+            </div>
+            <p><strong>Scenario A:</strong> {{ pick.side_a }}</p>
+            <p><strong>Scenario B:</strong> {{ pick.side_b }}</p>
+            <p class="small-note">Created at {{ pick.created_at }}</p>
+        </article>
+        {% endfor %}
+    </section>
+    {% else %}
+    <div class="empty-state" role="status">
+        <p>🔍 Belum ada pick tersimpan. Gunakan form di atas untuk menyimpan perbandingan pertama Anda.</p>
+    </div>
+    {% endif %}
+</main>
+{% endblock %}

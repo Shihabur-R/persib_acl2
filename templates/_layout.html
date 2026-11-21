@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}PERSIB Simetris — Mana yang Paling Seimbang?{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/simetris.css') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+    <header class="main-header" id="top">
+        <div class="header-container">
+            <div class="logo-area">
+                <div class="title-text">
+                    <span class="tournament-tag">AFC CHAMPIONS LEAGUE TWO · EAST ZONE</span>
+                    <h1>PERSIB <span>SIMETRIS</span></h1>
+                    <p class="tagline">Mana yang Paling Seimbang?</p>
+                </div>
+            </div>
+            <nav class="nav-links" aria-label="Main navigation">
+                <a href="{{ url_for('home') }}" {% if request.endpoint == 'home' %}class="active"{% endif %}>Home</a>
+                <a href="{{ url_for('balance') }}" {% if request.endpoint == 'balance' %}class="active"{% endif %}>Balance Meter</a>
+                <a href="{{ url_for('duel') }}" {% if request.endpoint == 'duel' %}class="active"{% endif %}>Scenario Duel</a>
+                <a href="{{ url_for('picks') }}" {% if request.endpoint == 'picks' %}class="active"{% endif %}>Saved Picks</a>
+                <a href="{{ url_for('fixtures') }}" {% if request.endpoint == 'fixtures' %}class="active"{% endif %}>Fixtures</a>
+                <a href="{{ url_for('clubs') }}" {% if request.endpoint == 'clubs' %}class="active"{% endif %}>Clubs</a>
+                <a href="{{ url_for('players') }}" {% if request.endpoint == 'players' %}class="active"{% endif %}>Players</a>
+            </nav>
+        </div>
+    </header>
+
+    {% block content %}{% endblock %}
+
+    <footer class="main-footer">
+        <div class="footer-container">
+            <p>PERSIB Simetris · Data: ACL2 2026/27 · Built on Flask & SQLite</p>
+        </div>
+    </footer>
+</body>
+</html>

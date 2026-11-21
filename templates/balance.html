@@ -1,0 +1,100 @@
+{% extends "_layout.html" %}
+{% block title %}Balance Meter — PERSIB Simetris{% endblock %}
+{% block content %}
+<main class="content-wrapper">
+    <div class="dashboard-intro">
+        <h1 class="jl-page-title">⚖️ Balance Meter</h1>
+        <p class="group-label">Ukur keseimbangan antar dua sisi: skuad, kandang vs tandang, atau head-to-head klasemen.</p>
+    </div>
+
+    <form method="get" class="filter-panel" aria-label="Balance meter controls">
+        <label>
+            Mode
+            <select name="mode" onchange="this.form.submit()">
+                <option value="squad" {% if mode == 'squad' %}selected{% endif %}>Squad Composition</option>
+                <option value="home_away" {% if mode == 'home_away' %}selected{% endif %}>Home vs Away</option>
+                <option value="head_to_head" {% if mode == 'head_to_head' %}selected{% endif %}>Head-to-Head</option>
+            </select>
+        </label>
+        {% if mode != 'home_away' %}
+        <label>
+            Club A
+            <select name="a" onchange="this.form.submit()">
+                {% for club in clubs %}
+                <option value="{{ club.slug }}" {% if club.slug == selected_a %}selected{% endif %}>{{ club.name }}</option>
+                {% endfor %}
+            </select>
+        </label>
+        <label>
+            Club B
+            <select name="b" onchange="this.form.submit()">
+                {% for club in clubs %}
+                <option value="{{ club.slug }}" {% if club.slug == selected_b %}selected{% endif %}>{{ club.name }}</option>
+                {% endfor %}
+            </select>
+        </label>
+        {% endif %}
+    </form>
+
+    <section class="balance-card">
+        <div class="balance-score-row">
+            <span class="balance-score">{{ result.score }}</span>
+            <span class="balance-label">{{ result.label_en }}</span>
+        </div>
+        <div class="balance-bar" role="img" aria-label="Balance score {{ result.score }} out of 100">
+            <div class="balance-bar-fill" style="width: {{ result.score }}%"></div>
+        </div>
+
+        {% if mode == 'squad' %}
+        <div class="two-column-grid">
+            <div>
+                <h3>{{ result.club_a.name }}</h3>
+                <ul class="composition-list">
+                    {% for pos, count in result.comp_a.items() %}
+                    <li><span class="pos-badge">{{ pos }}</span> {{ count }} players</li>
+                    {% endfor %}
+                </ul>
+            </div>
+            <div>
+                <h3>{{ result.club_b.name }}</h3>
+                <ul class="composition-list">
+                    {% for pos, count in result.comp_b.items() %}
+                    <li><span class="pos-badge">{{ pos }}</span> {{ count }} players</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+        {% elif mode == 'home_away' %}
+        <div class="two-column-grid">
+            <div>
+                <h3>Home</h3>
+                <p>Played: {{ result.split.home.played }}</p>
+                <p>Points: {{ result.split.home.points }}</p>
+                <p>Goals For: {{ result.split.home.goals_for }}</p>
+                <p>Goals Against: {{ result.split.home.goals_against }}</p>
+            </div>
+            <div>
+                <h3>Away</h3>
+                <p>Played: {{ result.split.away.played }}</p>
+                <p>Points: {{ result.split.away.points }}</p>
+                <p>Goals For: {{ result.split.away.goals_for }}</p>
+                <p>Goals Against: {{ result.split.away.goals_against }}</p>
+            </div>
+        </div>
+        {% else %}
+        <div class="two-column-grid">
+            <div>
+                <h3>{{ result.team_a.name }}</h3>
+                <p>Points: {{ result.team_a.points }}</p>
+                <p>Goals For: {{ result.team_a.goals_for }}</p>
+            </div>
+            <div>
+                <h3>{{ result.team_b.name }}</h3>
+                <p>Points: {{ result.team_b.points }}</p>
+                <p>Goals For: {{ result.team_b.goals_for }}</p>
+            </div>
+        </div>
+        {% endif %}
+    </section>
+</main>
+{% endblock %}

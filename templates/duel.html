@@ -1,0 +1,70 @@
+{% extends "_layout.html" %}
+{% block title %}Scenario Duel — PERSIB Simetris{% endblock %}
+{% block content %}
+<main class="content-wrapper">
+    <div class="dashboard-intro">
+        <h1 class="jl-page-title">🥊 Scenario Duel</h1>
+        <p class="group-label">Bandingkan dua skenario hasil pertandingan berdampingan dan lihat mana yang paling menguntungkan.</p>
+    </div>
+
+    <form method="post" class="filter-panel" aria-label="Scenario duel controls">
+        <label>
+            Club
+            <select name="club">
+                {% for club in clubs %}
+                <option value="{{ club.slug }}" {% if club.slug == selected_club.slug %}selected{% endif %}>{{ club.name }}</option>
+                {% endfor %}
+            </select>
+        </label>
+        <label>
+            Scenario A
+            <select name="result_a">
+                <option value="win">Win</option>
+                <option value="draw">Draw</option>
+                <option value="loss">Loss</option>
+            </select>
+        </label>
+        <label>
+            Scenario B
+            <select name="result_b">
+                <option value="win">Win</option>
+                <option value="draw" selected>Draw</option>
+                <option value="loss">Loss</option>
+            </select>
+        </label>
+        <button type="submit" class="btn-primary">Compare</button>
+    </form>
+
+    {% if base %}
+    <p class="group-label">Base standing: {{ base.name }} — {{ base.played }} played, {{ base.points }} points</p>
+    {% endif %}
+
+    {% if scenario_result %}
+    <section class="duel-grid" aria-label="Scenario comparison">
+        <article class="duel-card">
+            <h3>Scenario A ({{ scenario_result.result_a }})</h3>
+            <p>Played: {{ scenario_result.scenario_a.played }}</p>
+            <p>Won: {{ scenario_result.scenario_a.won }}</p>
+            <p>Drawn: {{ scenario_result.scenario_a.drawn }}</p>
+            <p>Lost: {{ scenario_result.scenario_a.lost }}</p>
+            <p class="duel-points">Points: {{ scenario_result.scenario_a.points }}</p>
+        </article>
+        <article class="duel-card">
+            <h3>Scenario B ({{ scenario_result.result_b }})</h3>
+            <p>Played: {{ scenario_result.scenario_b.played }}</p>
+            <p>Won: {{ scenario_result.scenario_b.won }}</p>
+            <p>Drawn: {{ scenario_result.scenario_b.drawn }}</p>
+            <p>Lost: {{ scenario_result.scenario_b.lost }}</p>
+            <p class="duel-points">Points: {{ scenario_result.scenario_b.points }}</p>
+        </article>
+    </section>
+
+    <section class="verdict-card">
+        <h3>Verdict</h3>
+        <p>Most advantageous: <strong>{{ scenario_result.verdict.advantage }}</strong></p>
+        <p>Balance score: <strong>{{ scenario_result.verdict.balance_score }}</strong> — {{ scenario_result.verdict.balance_label_en }}</p>
+        <p class="small-note">Goals for/against are not modelled in this projection; only points and match outcome ratio are compared.</p>
+    </section>
+    {% endif %}
+</main>
+{% endblock %}

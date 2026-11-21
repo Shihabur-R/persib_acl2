@@ -52,7 +52,8 @@ A lightweight, real-time web dashboard for tracking AFC Champions League Two (AC
 Start the development server:
 
 ```bash
-python app.py
+python app_v2.py  # PERSIB Simetris application (recommended)
+# or run the legacy app: python app.py
 ```
 *The application will be available at `http://127.0.0.1:5000/`*
 
